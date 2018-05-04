@@ -1,0 +1,3 @@
+name: get-pulumi-com
+description: get.pulumi.com is your entrypoint into the wonderful world of Pulumi!
+runtime: nodejs
