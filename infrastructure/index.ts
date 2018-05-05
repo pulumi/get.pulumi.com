@@ -54,6 +54,7 @@ const distributionArgs: aws.cloudfront.DistributionArgs = {
         includeCookies: false,
         prefix: `${fullDomain}/`,
     },
+    defaultRootObject: "install.sh",
 };
 
 const cloudfront = new aws.cloudfront.Distribution(`${fullDomain}-cf`, distributionArgs);
