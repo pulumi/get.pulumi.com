@@ -4,6 +4,7 @@ set -e
 RESET="\\033[0m"
 RED="\\033[31m"
 GREEN="\\033[32m"
+YELLOW="\\033[33m"
 
 print_unsupported_platform()
 {
@@ -21,6 +22,11 @@ say_green()
 say_red()
 {
     printf "%b%s%b\\n" "${RED}" "$1" "${RESET}"
+}
+
+say_yellow()
+{
+    printf "%b%s%b\\n" "${YELLOW}" "$1" "${RESET}"
 }
 
 VERSION=""
@@ -75,6 +81,46 @@ if curl --fail -L -o "${TARBALL_DEST}" "${TARBALL_URL}"; then
 else
     say_red "serror: failed to download ${TARBALL_URL}"
     exit 1
+fi
+
+# While we are in closed beta, we have special npm and PyPI registires we want to use
+say_green "+ Since Pulumi is in private beta, we need to configure private package sources for both NodeJS and Python."
+say_green "+ We'll do this now if you have \`npm\` or \`pip\` installed"
+
+if command -v npm > /dev/null; then
+    say_green "+ Registering npmjs.pulumi.com"
+    npm config set @pulumi:registry=https://npmjs.pulumi.com/ || {
+        say_yellow "+ warning: \`npm config set @pulumi:registry=https://npmjs.pulumi.com/\` failed, you will need to run this manually before using Pulumi with NodeJS. Please see https://docs.pulumi.com/reference/javascript.html for more help"
+    }
+fi
+
+if command -v pip > /dev/null; then
+    say_green "+ Registering pypi.pulumi.com"
+
+    # pip config is new in pip 10.0.0, so try that first
+    if pip config list >/dev/null 2>/dev/null; then
+        pip config set global.extra-index-url https://pypi.pulumi.com/simple || {
+            say_yellow "+ warning: \`pip config set global.extra-index-url https://pypi.pulumi.com/simple\` failed, you will need to run this manually before using Pulumi with Python. Please see https://docs.pulumi.com/reference/python.html for more help"
+        }
+    else
+        # We can't use pip config, so let's add things to pip.conf
+        PIP_CONFIG_LOCATION="${HOME}/.config/pip"
+        if [ "$(uname)" = "Darwin" ] && [ -e "$HOME/Library/Application Support/pip" ]; then
+            # per https://pip.pypa.io/en/stable/user_guide/#config-file, on macOS, if $HOME/Library/Application Support/pip exists, the pip config lives there
+            PIP_CONFIG_LOCATION="$HOME/Library/Application Support/pip"
+        fi
+
+       if [ ! -e "${PIP_CONFIG_LOCATION}/pip.conf" ]; then
+            printf "[global]\\nextra-index-url=https://pypi.pulumi.com/simple\\n" > "${PIP_CONFIG_LOCATION}/pip.conf"
+        elif grep -q "extra-index-url=https://pypi.pulumi.com/simple" "${PIP_CONFIG_LOCATION}/pip.conf"; then
+           # If the above test passed, then our extra-index-url is already in the configuration file (perhaps from a previous run of this
+           # script) and we have nothing to do.
+           true
+        else
+            say_yellow "+ warning: Sorry, we couldn't automatically add the Pulumi private package index to ${PIP_CONFIG_LOCATION}/pip.conf, so you'll have to do that yourself, before using Pulumi with Python. Please see https://docs.pulumi.com/reference/python.html for more help"
+        fi
+    fi
+
 fi
 
 # If we can, we'll add a line to the user's .profile adding $HOME/.pulumi/bin to the PATH
