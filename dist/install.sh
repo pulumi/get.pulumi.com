@@ -103,24 +103,33 @@ if command -v pip > /dev/null; then
             say_yellow "+ warning: \`pip config set global.extra-index-url https://pypi.pulumi.com/simple\` failed, you will need to run this manually before using Pulumi with Python. Please see https://docs.pulumi.com/reference/python.html for more help"
         }
     else
-        # We can't use pip config, so let's add things to pip.conf
+        # We can't use pip config, so let's add things to pip.conf.
+
+        # First, let's figure out where pip is going to look for its config file.
         PIP_CONFIG_LOCATION="${HOME}/.config/pip"
         if [ "$(uname)" = "Darwin" ] && [ -e "$HOME/Library/Application Support/pip" ]; then
             # per https://pip.pypa.io/en/stable/user_guide/#config-file, on macOS, if $HOME/Library/Application Support/pip exists, the pip config lives there
             PIP_CONFIG_LOCATION="$HOME/Library/Application Support/pip"
         fi
 
-       if [ ! -e "${PIP_CONFIG_LOCATION}/pip.conf" ]; then
-            printf "[global]\\nextra-index-url=https://pypi.pulumi.com/simple\\n" > "${PIP_CONFIG_LOCATION}/pip.conf"
-        elif grep -q "extra-index-url=https://pypi.pulumi.com/simple" "${PIP_CONFIG_LOCATION}/pip.conf"; then
-           # If the above test passed, then our extra-index-url is already in the configuration file (perhaps from a previous run of this
-           # script) and we have nothing to do.
-           true
+        # When PIP_CONFIG_FILE is unset use it, otherwise set it to `pip.conf` in the directory we infered above.
+        if [ -z "${PIP_CONFIG_FILE:-}" ]; then
+            PIP_CONFIG_FILE="${PIP_CONFIG_LOCATION}/pip.conf"
+        fi
+
+        if [ ! -e "${PIP_CONFIG_FILE}" ]; then
+            # Ensure the folder we'll write the PIP configuration to exists
+            mkdir -p "$(dirname "${PIP_CONFIG_FILE}")"
+
+            printf "[global]\\nextra-index-url=https://pypi.pulumi.com/simple\\n" > "${PIP_CONFIG_FILE}"
+        elif grep -q "extra-index-url=https://pypi.pulumi.com/simple" "${PIP_CONFIG_FILE}"; then
+            # If the above test passed, then our extra-index-url is already in the configuration file (perhaps from a previous run of this
+            # script) and we have nothing to do.
+            true
         else
             say_yellow "+ warning: Sorry, we couldn't automatically add the Pulumi private package index to ${PIP_CONFIG_LOCATION}/pip.conf, so you'll have to do that yourself, before using Pulumi with Python. Please see https://docs.pulumi.com/reference/python.html for more help"
         fi
     fi
-
 fi
 
 # If we can, we'll add a line to the user's .profile adding $HOME/.pulumi/bin to the PATH
