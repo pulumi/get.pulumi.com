@@ -33,7 +33,7 @@ VERSION=""
 if [ "$1" = "--version" ]; then
     VERSION=$2
 else
-    if ! VERSION=$(curl --fail --silent -L "https://docs.pulumi.com/latest-version"); then
+    if ! VERSION=$(curl --fail --silent -L "https://pulumi.io/latest-version"); then
         say_red "error: could not determine latest version of Pulumi, try passing --version X.Y.Z to"
         say_red "       install an explicit version"
     fi

@@ -4,7 +4,7 @@ $ProgressPreference="SilentlyContinue"
 
 # Some versions of PowerShell do not support Tls1.2 out of the box, but pulumi.io requires it
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
-$latestVersion = (Invoke-WebRequest -UseBasicParsing https://docs.pulumi.com/latest-version).Content
+$latestVersion = (Invoke-WebRequest -UseBasicParsing https://pulumi.io/latest-version).Content
 
 $downloadUrl = "https://get.pulumi.com/releases/sdk/pulumi-v${latestVersion}-windows-x64.zip"
 
