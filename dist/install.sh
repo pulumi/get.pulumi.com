@@ -36,6 +36,7 @@ else
     if ! VERSION=$(curl --fail --silent -L "https://pulumi.io/latest-version"); then
         say_red "error: could not determine latest version of Pulumi, try passing --version X.Y.Z to"
         say_red "       install an explicit version"
+        exit 1
     fi
 fi
 
