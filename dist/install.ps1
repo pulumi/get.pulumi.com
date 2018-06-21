@@ -46,7 +46,7 @@ try {
     $val = $envKey.GetValue("PATH", "", [Microsoft.Win32.RegistryValueOptions]::DoNotExpandEnvironmentNames);
     if ($val -notlike "*${binRoot};*") {
         $envKey.SetValue("PATH", "$binRoot;$val", [Microsoft.Win32.RegistryValueKind]::ExpandString);
-        Write-Host "Added $binRoot to the `$PATH (changes may not be visible untill after a restart)"
+        Write-Host "Added $binRoot to the `$PATH (changes may not be visible until after a restart)"
     }
     $envKey.Close();
 } catch { 
@@ -54,7 +54,7 @@ try {
 }
 
 if ($env:PATH -notlike "*$binRoot*") {
-    $env:PATH = $binRoot;$env:PATH
+    $env:PATH = "$binRoot;$env:PATH"
 }
 
 # And cleanup our temp files
