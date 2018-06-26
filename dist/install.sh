@@ -29,13 +29,25 @@ say_yellow()
     printf "%b%s%b\\n" "${YELLOW}" "$1" "${RESET}"
 }
 
+at_exit()
+{
+    if [ "$?" -ne 0 ]; then
+        >&2 say_yellow
+        >&2 say_yellow "We're sorry, but it looks like something might have gone wrong during install."
+        >&2 say_yellow "If you need help, please join the #install channel on https://slack.pulumi.io/"
+    fi
+}
+
+trap at_exit EXIT
+
 VERSION=""
 if [ "$1" = "--version" ]; then
     VERSION=$2
 else
     if ! VERSION=$(curl --fail --silent -L "https://pulumi.io/latest-version"); then
-        say_red "error: could not determine latest version of Pulumi, try passing --version X.Y.Z to"
-        say_red "       install an explicit version"
+        >&2 say_red "error: could not determine latest version of Pulumi, try passing --version X.Y.Z to"
+        >&2 say_red "       install an explicit version"
+        exit 1
     fi
 fi
 
@@ -79,48 +91,61 @@ if curl --fail -L -o "${TARBALL_DEST}" "${TARBALL_URL}"; then
     rm -f "${TARBALL_DEST}"
     rm -rf "${EXTRACT_DIR}"
 else
-    say_red "serror: failed to download ${TARBALL_URL}"
+    >&2 say_red "error: failed to download ${TARBALL_URL}"
     exit 1
 fi
 
-# If we can, we'll add a line to the user's .profile adding $HOME/.pulumi/bin to the PATH
-SHELL_NAME=$(basename "${SHELL}")
-PROFILE_FILE=""
+# Now that we have installed Pulumi, if it is not already on the path, let's add a line to the
+# user's profile to add the folder to the PATH for future sessions.
+if ! command -v pulumi >/dev/null; then
+    # If we can, we'll add a line to the user's .profile adding $HOME/.pulumi/bin to the PATH
+    SHELL_NAME=$(basename "${SHELL}")
+    PROFILE_FILE=""
 
-case "${SHELL_NAME}" in
-    "bash")
-        # Terminal.app on macOS prefers .bash_profile to .bashrc, so we prefer that
-        # file when trying to put our export into a profile. On *NIX, .bashrc is
-        # prefered as it is sourced for new interactive shells.
-        if [ "$(uname)" != "Darwin" ]; then
-            if [ -e "${HOME}/.bashrc" ]; then
-                PROFILE_FILE="${HOME}/.bashrc"
-            elif [ -e "${HOME}/.bash_profile" ]; then
-                PROFILE_FILE="${HOME}/.bash_profile"
+    case "${SHELL_NAME}" in
+        "bash")
+            # Terminal.app on macOS prefers .bash_profile to .bashrc, so we prefer that
+            # file when trying to put our export into a profile. On *NIX, .bashrc is
+            # prefered as it is sourced for new interactive shells.
+            if [ "$(uname)" != "Darwin" ]; then
+                if [ -e "${HOME}/.bashrc" ]; then
+                    PROFILE_FILE="${HOME}/.bashrc"
+                elif [ -e "${HOME}/.bash_profile" ]; then
+                    PROFILE_FILE="${HOME}/.bash_profile"
+                fi
+            else
+                if [ -e "${HOME}/.bash_profile" ]; then
+                    PROFILE_FILE="${HOME}/.bash_profile"
+                elif [ -e "${HOME}/.bashrc" ]; then
+                    PROFILE_FILE="${HOME}/.bashrc"
+                fi
             fi
-        else
-            if [ -e "${HOME}/.bash_profile" ]; then
-                PROFILE_FILE="${HOME}/.bash_profile"
-            elif [ -e "${HOME}/.bashrc" ]; then
-                PROFILE_FILE="${HOME}/.bashrc"
+            ;;
+        "zsh")
+            if [ -e "${HOME}/.zshrc" ]; then
+                PROFILE_FILE="${HOME}/.zshrc"
             fi
-        fi
-        ;;
-    "zsh")
-        if [ -e "${HOME}/.zshrc" ]; then
-            PROFILE_FILE="${HOME}/.zshrc"
-        fi
-        ;;
-esac
+            ;;
+    esac
 
-if [ ! -z "${PROFILE_FILE}" ]; then
-    LINE_TO_ADD="export PATH=\$PATH:\$HOME/.pulumi/bin"
-    if ! grep -q "${LINE_TO_ADD}" "${PROFILE_FILE}"; then
-        say_green "+ Adding \$HOME/.pulumi/bin to \$PATH in ${PROFILE_FILE}"
-        printf "\\n# add Pulumi to the PATH\\n%s\\n" "${LINE_TO_ADD}" >> "${PROFILE_FILE}"
+    if [ ! -z "${PROFILE_FILE}" ]; then
+        LINE_TO_ADD="export PATH=\$PATH:\$HOME/.pulumi/bin"
+        if ! grep -q "# add Pulumi to the PATH" "${PROFILE_FILE}"; then
+            say_green "+ Adding \$HOME/.pulumi/bin to \$PATH in ${PROFILE_FILE}"
+            printf "\\n# add Pulumi to the PATH\\n%s\\n" "${LINE_TO_ADD}" >> "${PROFILE_FILE}"
+        fi
+
+        say_green "+ Pulumi has been installed! Please restart your shell, or add add $HOME/.pulumi/bin to your \$PATH, to start using it"
+    else
+        say_green "+ Pulumi has been installed! Please add $HOME/.pulumi/bin to your \$PATH to start using it"
     fi
+elif [ "$(command -v pulumi)" != "$HOME/.pulumi/bin/pulumi" ]; then
+    say_green "+ Pulumi has been installed!"
+    say_yellow
+    say_yellow "warning: Pulumi has been installed to $HOME/.pulumi/bin, but it looks like there's a different copy of Pulumi"
+    say_yellow "         on your \$PATH at $(dirname "$(command -v pulumi)"). You'll need to explicitly invoke the version you"
+    say_yellow "         just installed or modify your \$PATH to prefer this location."
 
-    say_green "+ Pulumi has been installed! Please restart your shell, or add add $HOME/.pulumi/bin to your \$PATH, to start using it"
 else
-    say_green "+ Pulumi has been installed! Please add $HOME/.pulumi/bin to your \$PATH to start using it"
+    say_green "+ Pulumi has been installed!"
 fi
