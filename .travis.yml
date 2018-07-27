@@ -1,0 +1,8 @@
+language: node_js
+node_js:
+    - node
+install:
+    - curl -fsSL https://get.pulumi.com | bash
+    - export PATH=$HOME/.pulumi/bin:$PATH
+script:
+    - ./scripts/build-and-deploy
