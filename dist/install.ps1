@@ -50,7 +50,6 @@ try {
     }
     $envKey.Close();
 } catch { 
-    
 }
 
 if ($env:PATH -notlike "*$binRoot*") {
@@ -61,4 +60,11 @@ if ($env:PATH -notlike "*$binRoot*") {
 Remove-Item -Force $tempZip
 Remove-Item -Recurse -Force $tempDir
 
-Write-Host "Pulumi is now installed! Make sure $binRoot is on your `$PATH to use it!"
+Write-Host "Pulumi is now installed!"
+Write-Host ""
+Write-Host "Ensure that $binRoot is on your `$PATH to use it."
+Write-Host ""
+Write-Host "If you're new to Pulumi, here are some resources for getting started:"
+Write-Host "    - Getting Started Guide: https://pulumi.io/quickstart"
+Write-Host "    - Examples Repo: https://github.com/pulumi/examples"
+Write-Host "    - Create a New Project: Run 'pulumi new' to create a new project using a template"

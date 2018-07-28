@@ -2,9 +2,11 @@
 set -e
 
 RESET="\\033[0m"
-RED="\\033[31m"
-GREEN="\\033[32m"
-YELLOW="\\033[33m"
+RED="\\033[31;1m"
+GREEN="\\033[32;1m"
+YELLOW="\\033[33;1m"
+BLUE="\\033[34;1m"
+WHITE="\\033[37;1m"
 
 print_unsupported_platform()
 {
@@ -27,6 +29,16 @@ say_red()
 say_yellow()
 {
     printf "%b%s%b\\n" "${YELLOW}" "$1" "${RESET}"
+}
+
+say_blue()
+{
+    printf "%b%s%b\\n" "${BLUE}" "$1" "${RESET}"
+}
+
+say_white()
+{
+    printf "%b%s%b\\n" "${WHITE}" "$1" "${RESET}"
 }
 
 at_exit()
@@ -68,12 +80,18 @@ fi
 
 TARBALL_URL="https://get.pulumi.com/releases/sdk/pulumi-v${VERSION}-${OS}-x64.tar.gz"
 
-say_green "+ Downloading Pulumi from ${TARBALL_URL}"
+if ! command -v pulumi >/dev/null; then
+    say_blue "=== Installing Pulumi v${VERSION} ==="
+else
+    say_blue "=== Upgrading Pulumi $(pulumi version) to v${VERSION} ==="
+fi
+
+say_white "+ Downloading ${TARBALL_URL}..."
 
 TARBALL_DEST=$(mktemp -t pulumi.tar.gz.XXXXXXXXXX)
 
 if curl --fail -L -o "${TARBALL_DEST}" "${TARBALL_URL}"; then
-    say_green "+ Extracting Pulumi to $HOME/.pulumi/bin"
+    say_white "+ Extracting to $HOME/.pulumi/bin"
 
     # If `~/.pulumi/bin exists, clear it out
     if [ -e "${HOME}/.pulumi/bin" ]; then
@@ -131,21 +149,29 @@ if ! command -v pulumi >/dev/null; then
     if [ ! -z "${PROFILE_FILE}" ]; then
         LINE_TO_ADD="export PATH=\$PATH:\$HOME/.pulumi/bin"
         if ! grep -q "# add Pulumi to the PATH" "${PROFILE_FILE}"; then
-            say_green "+ Adding \$HOME/.pulumi/bin to \$PATH in ${PROFILE_FILE}"
+            say_white "+ Adding \$HOME/.pulumi/bin to \$PATH in ${PROFILE_FILE}"
             printf "\\n# add Pulumi to the PATH\\n%s\\n" "${LINE_TO_ADD}" >> "${PROFILE_FILE}"
         fi
 
-        say_green "+ Pulumi has been installed! Please restart your shell, or add add $HOME/.pulumi/bin to your \$PATH, to start using it"
+        EXTRA_INSTALL_STEP="+ Please restart your shell or add add $HOME/.pulumi/bin to your \$PATH"
     else
-        say_green "+ Pulumi has been installed! Please add $HOME/.pulumi/bin to your \$PATH to start using it"
+        EXTRA_INSTALL_STEP="+ Please add $HOME/.pulumi/bin to your \$PATH"
     fi
-elif [ "$(command -v pulumi)" != "$HOME/.pulumi/bin/pulumi" ]; then
-    say_green "+ Pulumi has been installed!"
+fi
+
+say_blue
+say_blue "=== Pulumi is now installed! 🍹 ==="
+if [ "$EXTRA_INSTALL_STEP" != "" ]; then
+    say_white "${EXTRA_INSTALL_STEP}"
+fi
+say_green "+ If you're new to Pulumi, here are some resources for getting started:"
+say_green "      - Getting Started Guide: https://pulumi.io/quickstart"
+say_green "      - Examples Repo: https://github.com/pulumi/examples"
+say_green "      - Create a New Project: Run 'pulumi new' to create a new project using a template"
+
+if [ "$(command -v pulumi)" != "$HOME/.pulumi/bin/pulumi" ]; then
     say_yellow
     say_yellow "warning: Pulumi has been installed to $HOME/.pulumi/bin, but it looks like there's a different copy of Pulumi"
     say_yellow "         on your \$PATH at $(dirname "$(command -v pulumi)"). You'll need to explicitly invoke the version you"
     say_yellow "         just installed or modify your \$PATH to prefer this location."
-
-else
-    say_green "+ Pulumi has been installed!"
 fi
