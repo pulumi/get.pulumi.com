@@ -10,10 +10,10 @@ WHITE="\\033[37;1m"
 
 print_unsupported_platform()
 {
-        >&2 say_red "error: We're sorry to say that it looks like Pulumi is not supported on your platform"
-        >&2 say_red "       we support 64 bit versions of Linux and macOS but we're interested in supporting"
-        >&2 say_red "       more platforms.  Please open an issue at https://github.com/pulumi/pulumi and"
-        >&2 say_red "       let us know what platform you're using!"
+    >&2 say_red "error: We're sorry to say that it looks like Pulumi is not supported on your platform"
+    >&2 say_red "       we support 64 bit versions of Linux and macOS but we're interested in supporting"
+    >&2 say_red "       more platforms.  Please open an issue at https://github.com/pulumi/pulumi and"
+    >&2 say_red "       let us know what platform you're using!"
 }
 
 say_green()
@@ -44,9 +44,9 @@ say_white()
 at_exit()
 {
     if [ "$?" -ne 0 ]; then
-        >&2 say_yellow
-        >&2 say_yellow "We're sorry, but it looks like something might have gone wrong during install."
-        >&2 say_yellow "If you need help, please join the #install channel on https://slack.pulumi.io/"
+        >&2 say_red
+        >&2 say_red "We're sorry, but it looks like something might have gone wrong during install."
+        >&2 say_red "If you need help, please join the #install channel on https://slack.pulumi.io/"
     fi
 }
 
@@ -157,6 +157,11 @@ if ! command -v pulumi >/dev/null; then
     else
         EXTRA_INSTALL_STEP="+ Please add $HOME/.pulumi/bin to your \$PATH"
     fi
+elif [ "$(command -v pulumi)" != "$HOME/.pulumi/bin/pulumi" ]; then
+    say_yellow
+    say_yellow "warning: Pulumi has been installed to $HOME/.pulumi/bin, but it looks like there's a different copy"
+    say_yellow "         on your \$PATH at $(dirname "$(command -v pulumi)"). You'll need to explicitly invoke the"
+    say_yellow "         version you just installed or modify your \$PATH to prefer this location."
 fi
 
 say_blue
@@ -168,10 +173,3 @@ say_green "+ If you're new to Pulumi, here are some resources for getting starte
 say_green "      - Getting Started Guide: https://pulumi.io/quickstart"
 say_green "      - Examples Repo: https://github.com/pulumi/examples"
 say_green "      - Create a New Project: Run 'pulumi new' to create a new project using a template"
-
-if [ "$(command -v pulumi)" != "$HOME/.pulumi/bin/pulumi" ]; then
-    say_yellow
-    say_yellow "warning: Pulumi has been installed to $HOME/.pulumi/bin, but it looks like there's a different copy of Pulumi"
-    say_yellow "         on your \$PATH at $(dirname "$(command -v pulumi)"). You'll need to explicitly invoke the version you"
-    say_yellow "         just installed or modify your \$PATH to prefer this location."
-fi
