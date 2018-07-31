@@ -2,12 +2,15 @@
 
 import * as aws from "@pulumi/aws";
 import * as pulumi from "@pulumi/pulumi";
+import * as path from "path";
+import * as fs from "fs";
+
+const cfg = new pulumi.Config(pulumi.getProject());
 
 const subDomain = "get";
-const domain = "pulumi.com";
+const domain = cfg.require("domain");
 const fullDomain = `${subDomain}.${domain}`;
-const certificateArn = "arn:aws:acm:us-east-1:058607598222:certificate/a3f72a2b-e715-4639-b126-1e4efc0b634b";
-
+const certificateArn = cfg.require("certificateArn");
 
 const contentBucket = new aws.s3.Bucket(`${fullDomain}-bucket`, {
     bucket: fullDomain,
@@ -71,3 +74,20 @@ const record = new aws.route53.Record(`${fullDomain}-record`, {
         },
     ],
 });
+
+// Upload all the files in ../dist. We force the Content-Type header to text/plain so it renders nicely in a web
+// browser when you view the page directly (for example, to inspect the script).
+const distRoot = path.join("..", "dist");
+
+for (let entry of fs.readdirSync(distRoot)) {
+    const entryPath = path.join(distRoot, entry);
+    if (fs.statSync(entryPath).isFile()) {
+        // tslint:disable-next-line
+        new aws.s3.BucketObject(entry, {
+            bucket: contentBucket,
+            contentType: "text/plain",
+            source: new pulumi.asset.FileAsset(entryPath),
+            acl: "public-read",
+        });
+    }
+}

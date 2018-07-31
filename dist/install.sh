@@ -2,9 +2,11 @@
 set -e
 
 RESET="\\033[0m"
-RED="\\033[31m"
-GREEN="\\033[32m"
-YELLOW="\\033[33m"
+RED="\\033[31;1m"
+GREEN="\\033[32;1m"
+YELLOW="\\033[33;1m"
+BLUE="\\033[34;1m"
+WHITE="\\033[37;1m"
 
 print_unsupported_platform()
 {
@@ -29,13 +31,35 @@ say_yellow()
     printf "%b%s%b\\n" "${YELLOW}" "$1" "${RESET}"
 }
 
+say_blue()
+{
+    printf "%b%s%b\\n" "${BLUE}" "$1" "${RESET}"
+}
+
+say_white()
+{
+    printf "%b%s%b\\n" "${WHITE}" "$1" "${RESET}"
+}
+
+at_exit()
+{
+    if [ "$?" -ne 0 ]; then
+        >&2 say_yellow
+        >&2 say_yellow "We're sorry, but it looks like something might have gone wrong during install."
+        >&2 say_yellow "If you need help, please join the #install channel on https://slack.pulumi.io/"
+    fi
+}
+
+trap at_exit EXIT
+
 VERSION=""
 if [ "$1" = "--version" ]; then
     VERSION=$2
 else
-    if ! VERSION=$(curl --fail --silent -L "https://docs.pulumi.com/latest-version"); then
-        say_red "error: could not determine latest version of Pulumi, try passing --version X.Y.Z to"
-        say_red "       install an explicit version"
+    if ! VERSION=$(curl --fail --silent -L "https://pulumi.io/latest-version"); then
+        >&2 say_red "error: could not determine latest version of Pulumi, try passing --version X.Y.Z to"
+        >&2 say_red "       install an explicit version"
+        exit 1
     fi
 fi
 
@@ -56,12 +80,18 @@ fi
 
 TARBALL_URL="https://get.pulumi.com/releases/sdk/pulumi-v${VERSION}-${OS}-x64.tar.gz"
 
-say_green "+ Downloading Pulumi from ${TARBALL_URL}"
+if ! command -v pulumi >/dev/null; then
+    say_blue "=== Installing Pulumi v${VERSION} ==="
+else
+    say_blue "=== Upgrading Pulumi $(pulumi version) to v${VERSION} ==="
+fi
+
+say_white "+ Downloading ${TARBALL_URL}..."
 
 TARBALL_DEST=$(mktemp -t pulumi.tar.gz.XXXXXXXXXX)
 
 if curl --fail -L -o "${TARBALL_DEST}" "${TARBALL_URL}"; then
-    say_green "+ Extracting Pulumi to $HOME/.pulumi/bin"
+    say_white "+ Extracting to $HOME/.pulumi/bin"
 
     # If `~/.pulumi/bin exists, clear it out
     if [ -e "${HOME}/.pulumi/bin" ]; then
@@ -79,88 +109,69 @@ if curl --fail -L -o "${TARBALL_DEST}" "${TARBALL_URL}"; then
     rm -f "${TARBALL_DEST}"
     rm -rf "${EXTRACT_DIR}"
 else
-    say_red "serror: failed to download ${TARBALL_URL}"
+    >&2 say_red "error: failed to download ${TARBALL_URL}"
     exit 1
 fi
 
-# While we are in closed beta, we have special npm and PyPI registires we want to use
-say_green "+ Since Pulumi is in private beta, we need to configure private package sources for both NodeJS and Python."
-say_green "+ We'll do this now if you have \`npm\` or \`pip\` installed"
+# Now that we have installed Pulumi, if it is not already on the path, let's add a line to the
+# user's profile to add the folder to the PATH for future sessions.
+if ! command -v pulumi >/dev/null; then
+    # If we can, we'll add a line to the user's .profile adding $HOME/.pulumi/bin to the PATH
+    SHELL_NAME=$(basename "${SHELL}")
+    PROFILE_FILE=""
 
-if command -v npm > /dev/null; then
-    say_green "+ Registering npmjs.pulumi.com"
-    npm config set @pulumi:registry=https://npmjs.pulumi.com/ || {
-        say_yellow "+ warning: \`npm config set @pulumi:registry=https://npmjs.pulumi.com/\` failed, you will need to run this manually before using Pulumi with NodeJS. Please see https://docs.pulumi.com/reference/javascript.html for more help"
-    }
-fi
+    case "${SHELL_NAME}" in
+        "bash")
+            # Terminal.app on macOS prefers .bash_profile to .bashrc, so we prefer that
+            # file when trying to put our export into a profile. On *NIX, .bashrc is
+            # prefered as it is sourced for new interactive shells.
+            if [ "$(uname)" != "Darwin" ]; then
+                if [ -e "${HOME}/.bashrc" ]; then
+                    PROFILE_FILE="${HOME}/.bashrc"
+                elif [ -e "${HOME}/.bash_profile" ]; then
+                    PROFILE_FILE="${HOME}/.bash_profile"
+                fi
+            else
+                if [ -e "${HOME}/.bash_profile" ]; then
+                    PROFILE_FILE="${HOME}/.bash_profile"
+                elif [ -e "${HOME}/.bashrc" ]; then
+                    PROFILE_FILE="${HOME}/.bashrc"
+                fi
+            fi
+            ;;
+        "zsh")
+            if [ -e "${HOME}/.zshrc" ]; then
+                PROFILE_FILE="${HOME}/.zshrc"
+            fi
+            ;;
+    esac
 
-if command -v pip > /dev/null; then
-    say_green "+ Registering pypi.pulumi.com"
+    if [ ! -z "${PROFILE_FILE}" ]; then
+        LINE_TO_ADD="export PATH=\$PATH:\$HOME/.pulumi/bin"
+        if ! grep -q "# add Pulumi to the PATH" "${PROFILE_FILE}"; then
+            say_white "+ Adding \$HOME/.pulumi/bin to \$PATH in ${PROFILE_FILE}"
+            printf "\\n# add Pulumi to the PATH\\n%s\\n" "${LINE_TO_ADD}" >> "${PROFILE_FILE}"
+        fi
 
-    # pip config is new in pip 10.0.0, so try that first
-    if pip config list >/dev/null 2>/dev/null; then
-        pip config set global.extra-index-url https://pypi.pulumi.com/simple || {
-            say_yellow "+ warning: \`pip config set global.extra-index-url https://pypi.pulumi.com/simple\` failed, you will need to run this manually before using Pulumi with Python. Please see https://docs.pulumi.com/reference/python.html for more help"
-        }
+        EXTRA_INSTALL_STEP="+ Please restart your shell or add add $HOME/.pulumi/bin to your \$PATH"
     else
-        # We can't use pip config, so let's add things to pip.conf
-        PIP_CONFIG_LOCATION="${HOME}/.config/pip"
-        if [ "$(uname)" = "Darwin" ] && [ -e "$HOME/Library/Application Support/pip" ]; then
-            # per https://pip.pypa.io/en/stable/user_guide/#config-file, on macOS, if $HOME/Library/Application Support/pip exists, the pip config lives there
-            PIP_CONFIG_LOCATION="$HOME/Library/Application Support/pip"
-        fi
-
-       if [ ! -e "${PIP_CONFIG_LOCATION}/pip.conf" ]; then
-            printf "[global]\\nextra-index-url=https://pypi.pulumi.com/simple\\n" > "${PIP_CONFIG_LOCATION}/pip.conf"
-        elif grep -q "extra-index-url=https://pypi.pulumi.com/simple" "${PIP_CONFIG_LOCATION}/pip.conf"; then
-           # If the above test passed, then our extra-index-url is already in the configuration file (perhaps from a previous run of this
-           # script) and we have nothing to do.
-           true
-        else
-            say_yellow "+ warning: Sorry, we couldn't automatically add the Pulumi private package index to ${PIP_CONFIG_LOCATION}/pip.conf, so you'll have to do that yourself, before using Pulumi with Python. Please see https://docs.pulumi.com/reference/python.html for more help"
-        fi
+        EXTRA_INSTALL_STEP="+ Please add $HOME/.pulumi/bin to your \$PATH"
     fi
-
 fi
 
-# If we can, we'll add a line to the user's .profile adding $HOME/.pulumi/bin to the PATH
-SHELL_NAME=$(basename "${SHELL}")
-PROFILE_FILE=""
+say_blue
+say_blue "=== Pulumi is now installed! 🍹 ==="
+if [ "$EXTRA_INSTALL_STEP" != "" ]; then
+    say_white "${EXTRA_INSTALL_STEP}"
+fi
+say_green "+ If you're new to Pulumi, here are some resources for getting started:"
+say_green "      - Getting Started Guide: https://pulumi.io/quickstart"
+say_green "      - Examples Repo: https://github.com/pulumi/examples"
+say_green "      - Create a New Project: Run 'pulumi new' to create a new project using a template"
 
-case "${SHELL_NAME}" in
-    "bash")
-        # Terminal.app on macOS prefers .bash_profile to .bashrc, so we prefer that
-        # file when trying to put our export into a profile. On *NIX, .bashrc is
-        # prefered as it is sourced for new interactive shells.
-        if [ "$(uname)" != "Darwin" ]; then
-            if [ -e "${HOME}/.bashrc" ]; then
-                PROFILE_FILE="${HOME}/.bashrc"
-            elif [ -e "${HOME}/.bash_profile" ]; then
-                PROFILE_FILE="${HOME}/.bash_profile"
-            fi
-        else
-            if [ -e "${HOME}/.bash_profile" ]; then
-                PROFILE_FILE="${HOME}/.bash_profile"
-            elif [ -e "${HOME}/.bashrc" ]; then
-                PROFILE_FILE="${HOME}/.bashrc"
-            fi
-        fi
-        ;;
-    "zsh")
-        if [ -e "${HOME}/.zshrc" ]; then
-            PROFILE_FILE="${HOME}/.zshrc"
-        fi
-        ;;
-esac
-
-if [ ! -z "${PROFILE_FILE}" ]; then
-    LINE_TO_ADD="export PATH=\$PATH:\$HOME/.pulumi/bin"
-    if ! grep -q "${LINE_TO_ADD}" "${PROFILE_FILE}"; then
-        say_green "+ Adding \$HOME/.pulumi/bin to \$PATH in ${PROFILE_FILE}"
-        printf "\\n# add Pulumi to the PATH\\n%s\\n" "${LINE_TO_ADD}" >> "${PROFILE_FILE}"
-    fi
-
-    say_green "+ Pulumi has been installed! Please restart your shell, or add add $HOME/.pulumi/bin to your \$PATH, to start using it"
-else
-    say_green "+ Pulumi has been installed! Please add $HOME/.pulumi/bin to your \$PATH to start using it"
+if [ "$(command -v pulumi)" != "$HOME/.pulumi/bin/pulumi" ]; then
+    say_yellow
+    say_yellow "warning: Pulumi has been installed to $HOME/.pulumi/bin, but it looks like there's a different copy of Pulumi"
+    say_yellow "         on your \$PATH at $(dirname "$(command -v pulumi)"). You'll need to explicitly invoke the version you"
+    say_yellow "         just installed or modify your \$PATH to prefer this location."
 fi
