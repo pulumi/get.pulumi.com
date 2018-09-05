@@ -4,6 +4,7 @@ import * as aws from "@pulumi/aws";
 import * as pulumi from "@pulumi/pulumi";
 import * as path from "path";
 import * as fs from "fs";
+import * as mime from "mime";
 
 const cfg = new pulumi.Config(pulumi.getProject());
 
@@ -37,6 +38,7 @@ const distributionArgs: aws.cloudfront.DistributionArgs = {
         minTtl: 0,
         defaultTtl: 60,
         maxTtl: 60,
+        compress: true,
     },
     enabled: true,
     origins: [{
@@ -86,6 +88,22 @@ for (let entry of fs.readdirSync(distRoot)) {
         new aws.s3.BucketObject(entry, {
             bucket: contentBucket,
             contentType: "text/plain",
+            source: new pulumi.asset.FileAsset(entryPath),
+            acl: "public-read",
+        });
+    }
+}
+
+// Upload all the files in ../dist/new. We use the mime library to determine the Content-Type header of each file.
+const distNewRoot = path.join(distRoot, "new");
+
+for (let entry of fs.readdirSync(distNewRoot)) {
+    const entryPath = path.join(distNewRoot, entry);
+    if (fs.statSync(entryPath).isFile()) {
+        // tslint:disable-next-line
+        new aws.s3.BucketObject("new/" + entry, {
+            bucket: contentBucket,
+            contentType: mime.getType(entryPath) || undefined,
             source: new pulumi.asset.FileAsset(entryPath),
             acl: "public-read",
         });
