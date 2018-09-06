@@ -6,11 +6,13 @@
         "build": "tsc"
     },
     "devDependencies": {
+        "@types/mime": "^2.0.0",
         "tslint": "^5.10.0",
         "typescript": "^2.7.2"
     },
     "dependencies": {
         "@pulumi/aws": "^0.14.0",
-        "@pulumi/pulumi": "^0.14.0"
+        "@pulumi/pulumi": "^0.14.0",
+        "mime": "^2.3.1"
     }
 }
