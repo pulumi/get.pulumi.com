@@ -104,7 +104,15 @@ if curl --fail -L -o "${TARBALL_DEST}" "${TARBALL_URL}"; then
     # folder and copying to not depend on additional tar flags
     EXTRACT_DIR=$(mktemp -d pulumi.XXXXXXXXXX)
     tar zxf "${TARBALL_DEST}" -C "${EXTRACT_DIR}"
-    mv "${EXTRACT_DIR}/pulumi/bin" "${HOME}/.pulumi/"
+
+    # Our tarballs used to have a top level bin folder, so support that older
+    # format if we detect it. Newer tarballs just have all the binaries in
+    # the top level Pulumi folder.
+    if [ -d "${EXTRACT_DIR}/pulumi/bin" ]; then
+        mv "${EXTRACT_DIR}/pulumi/bin" "${HOME}/.pulumi/"
+    else
+        cp -r "${EXTRACT_DIR}/pulumi/." "${HOME}/.pulumi/bin/"
+    fi
 
     rm -f "${TARBALL_DEST}"
     rm -rf "${EXTRACT_DIR}"
