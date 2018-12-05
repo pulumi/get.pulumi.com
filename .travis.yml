@@ -2,7 +2,7 @@ language: node_js
 node_js:
     - node
 install:
-    - curl -fsSL https://get.pulumi.com | bash
+    - curl -fsSL https://get.pulumi.com | bash -s -- --version 0.16.7-dev.1543963592
     - export PATH=$HOME/.pulumi/bin:$PATH
 script:
     - ./scripts/build-and-deploy
