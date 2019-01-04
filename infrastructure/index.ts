@@ -22,7 +22,7 @@ const contentBucket = new aws.s3.Bucket(`${fullDomain}-bucket`, {
 // contentBucket needs to have the "public-read" ACL so its contents can be ready by CloudFront and
 // served. But we deny the s3:ListBucket permission to prevent unintended disclosure of the bucket's
 // contents.
-const denyListPolicyState: aws.s3.BucketPolicyState = {
+const denyListPolicyState: aws.s3.BucketPolicyArgs = {
     bucket: contentBucket.bucket,
     policy: contentBucket.arn.apply(arn => JSON.stringify({
         Version: "2008-10-17",
