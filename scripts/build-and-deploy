@@ -3,7 +3,6 @@ set -eou pipefail
 
 cd infrastructure
 yarn install
-yarn run tsc
 
 case "${TRAVIS_BRANCH}" in
     "master")
