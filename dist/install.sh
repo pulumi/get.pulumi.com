@@ -53,7 +53,7 @@ at_exit()
 trap at_exit EXIT
 
 VERSION=""
-if [ "$1" = "--version" ]; then
+if [ "$1" = "--version" ] && [ "$2" != "latest" ]; then
     VERSION=$2
 else
     if ! VERSION=$(curl --fail --silent -L "https://pulumi.io/latest-version"); then
