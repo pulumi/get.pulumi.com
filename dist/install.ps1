@@ -2,9 +2,9 @@ Set-StrictMode -Version Latest
 $ErrorActionPreference="Stop"
 $ProgressPreference="SilentlyContinue"
 
-# Some versions of PowerShell do not support Tls1.2 out of the box, but pulumi.io requires it
+# Some versions of PowerShell do not support Tls1.2 out of the box, but pulumi.com requires it
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
-$latestVersion = (Invoke-WebRequest -UseBasicParsing https://pulumi.io/latest-version).Content.Trim()
+$latestVersion = (Invoke-WebRequest -UseBasicParsing https://www.pulumi.com/latest-version).Content.Trim()
 
 $downloadUrl = "https://get.pulumi.com/releases/sdk/pulumi-v${latestVersion}-windows-x64.zip"
 
@@ -64,7 +64,4 @@ Write-Host "Pulumi is now installed!"
 Write-Host ""
 Write-Host "Ensure that $binRoot is on your `$PATH to use it."
 Write-Host ""
-Write-Host "If you're new to Pulumi, here are some resources for getting started:"
-Write-Host "    - Getting Started Guide: https://pulumi.io/quickstart"
-Write-Host "    - Examples Repo: https://github.com/pulumi/examples"
-Write-Host "    - Create a New Project: Run 'pulumi new' to create a new project using a template"
+Write-Host "If you're new to Pulumi, get started: https://www.pulumi.com/docs/quickstart"

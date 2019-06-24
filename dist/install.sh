@@ -56,7 +56,7 @@ VERSION=""
 if [ "$1" = "--version" ] && [ "$2" != "latest" ]; then
     VERSION=$2
 else
-    if ! VERSION=$(curl --fail --silent -L "https://pulumi.io/latest-version"); then
+    if ! VERSION=$(curl --fail --silent -L "https://www.pulumi.com/latest-version"); then
         >&2 say_red "error: could not determine latest version of Pulumi, try passing --version X.Y.Z to"
         >&2 say_red "       install an explicit version"
         exit 1
@@ -177,7 +177,4 @@ say_blue "=== Pulumi is now installed! 🍹 ==="
 if [ "$EXTRA_INSTALL_STEP" != "" ]; then
     say_white "${EXTRA_INSTALL_STEP}"
 fi
-say_green "+ If you're new to Pulumi, here are some resources for getting started:"
-say_green "      - Getting Started Guide: https://pulumi.io/quickstart"
-say_green "      - Examples Repo: https://github.com/pulumi/examples"
-say_green "      - Create a New Project: Run 'pulumi new' to create a new project using a template"
+say_green "+ If you're new to Pulumi, get started: https://www.pulumi.com/docs/quickstart"
