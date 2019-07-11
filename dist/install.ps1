@@ -4,7 +4,7 @@ $ProgressPreference="SilentlyContinue"
 
 # Some versions of PowerShell do not support Tls1.2 out of the box, but pulumi.io requires it
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
-$latestVersion = (Invoke-WebRequest -UseBasicParsing https://pulumi.io/latest-version).Content.Trim()
+$latestVersion = (Invoke-WebRequest -UseBasicParsing https://www.pulumi.com/latest-version).Content.Trim()
 
 $downloadUrl = "https://get.pulumi.com/releases/sdk/pulumi-v${latestVersion}-windows-x64.zip"
 
@@ -46,7 +46,7 @@ try {
     $val = $envKey.GetValue("PATH", "", [Microsoft.Win32.RegistryValueOptions]::DoNotExpandEnvironmentNames);
     if ($val -notlike "*${binRoot};*") {
         $envKey.SetValue("PATH", "$binRoot;$val", [Microsoft.Win32.RegistryValueKind]::ExpandString);
-        Write-Host "Added $binRoot to the `$PATH (changes may not be visible until after a restart)"
+        Write-Host "Added $binRoot to the $PATH. Changes may not be visible until after a restart."
     }
     $envKey.Close();
 } catch { 
@@ -62,7 +62,7 @@ Remove-Item -Recurse -Force $tempDir
 
 Write-Host "Pulumi is now installed!"
 Write-Host ""
-Write-Host "Ensure that $binRoot is on your `$PATH to use it."
+Write-Host "Ensure that $binRoot is on your $PATH to use it."
 Write-Host ""
 Write-Host "If you're new to Pulumi, here are some resources for getting started:"
 Write-Host "    - Getting Started Guide: https://pulumi.io/quickstart"
