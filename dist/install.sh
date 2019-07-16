@@ -177,4 +177,4 @@ say_blue "=== Pulumi is now installed! 🍹 ==="
 if [ "$EXTRA_INSTALL_STEP" != "" ]; then
     say_white "${EXTRA_INSTALL_STEP}"
 fi
-say_green "+ If you're new to Pulumi, get started: https://www.pulumi.com/docs/quickstart"
+say_green "+ Get started with Pulumi: https://www.pulumi.com/docs/quickstart"
