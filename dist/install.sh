@@ -46,7 +46,7 @@ at_exit()
     if [ "$?" -ne 0 ]; then
         >&2 say_red
         >&2 say_red "We're sorry, but it looks like something might have gone wrong during installation."
-        >&2 say_red "If you need help, please join us on https://pulumi-community.slack.com/"
+        >&2 say_red "If you need help, please join us on https://slack.pulumi.com/"
     fi
 }
 
