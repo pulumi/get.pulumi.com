@@ -10,8 +10,8 @@ WHITE="\\033[37;1m"
 
 print_unsupported_platform()
 {
-    >&2 say_red "error: We're sorry to say that it looks like Pulumi is not supported on your platform"
-    >&2 say_red "       we support 64 bit versions of Linux and macOS but we're interested in supporting"
+    >&2 say_red "error: We're sorry, but it looks like Pulumi is not supported on your platform"
+    >&2 say_red "       We support 64-bit versions of Linux and macOS and are interested in supporting"
     >&2 say_red "       more platforms.  Please open an issue at https://github.com/pulumi/pulumi and"
     >&2 say_red "       let us know what platform you're using!"
 }
@@ -45,8 +45,8 @@ at_exit()
 {
     if [ "$?" -ne 0 ]; then
         >&2 say_red
-        >&2 say_red "We're sorry, but it looks like something might have gone wrong during install."
-        >&2 say_red "If you need help, please join the #install channel on https://slack.pulumi.io/"
+        >&2 say_red "We're sorry, but it looks like something might have gone wrong during installation."
+        >&2 say_red "If you need help, please join us on https://slack.pulumi.com/"
     fi
 }
 
@@ -161,7 +161,7 @@ if ! command -v pulumi >/dev/null; then
             printf "\\n# add Pulumi to the PATH\\n%s\\n" "${LINE_TO_ADD}" >> "${PROFILE_FILE}"
         fi
 
-        EXTRA_INSTALL_STEP="+ Please restart your shell or add add $HOME/.pulumi/bin to your \$PATH"
+        EXTRA_INSTALL_STEP="+ Please restart your shell or add $HOME/.pulumi/bin to your \$PATH"
     else
         EXTRA_INSTALL_STEP="+ Please add $HOME/.pulumi/bin to your \$PATH"
     fi

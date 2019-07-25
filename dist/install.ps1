@@ -46,7 +46,7 @@ try {
     $val = $envKey.GetValue("PATH", "", [Microsoft.Win32.RegistryValueOptions]::DoNotExpandEnvironmentNames);
     if ($val -notlike "*${binRoot};*") {
         $envKey.SetValue("PATH", "$binRoot;$val", [Microsoft.Win32.RegistryValueKind]::ExpandString);
-        Write-Host "Added $binRoot to the `$PATH (changes may not be visible until after a restart)"
+        Write-Host "Added $binRoot to the $PATH. Changes may not be visible until after a restart."
     }
     $envKey.Close();
 } catch { 
@@ -62,6 +62,6 @@ Remove-Item -Recurse -Force $tempDir
 
 Write-Host "Pulumi is now installed!"
 Write-Host ""
-Write-Host "Ensure that $binRoot is on your `$PATH to use it."
+Write-Host "Ensure that $binRoot is on your $PATH to use it."
 Write-Host ""
 Write-Host "Get started with Pulumi: https://www.pulumi.com/docs/quickstart"
