@@ -62,6 +62,6 @@ Remove-Item -Recurse -Force $tempDir
 
 Write-Host "Pulumi is now installed!"
 Write-Host ""
-Write-Host "Ensure that $binRoot is on your $PATH to use it."
+Write-Host "Ensure that $binRoot is on your `$PATH to use it."
 Write-Host ""
 Write-Host "Get started with Pulumi: https://www.pulumi.com/docs/quickstart"
