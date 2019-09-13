@@ -148,8 +148,8 @@ if ! command -v pulumi >/dev/null; then
             fi
             ;;
         "zsh")
-            if [ -e "${HOME}/.zshrc" ]; then
-                PROFILE_FILE="${HOME}/.zshrc"
+            if [ -e "${ZDOTDIR:-$HOME}/.zshrc" ]; then
+                PROFILE_FILE="${ZDOTDIR:-$HOME}/.zshrc"
             fi
             ;;
     esac
