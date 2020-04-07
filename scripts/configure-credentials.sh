@@ -55,5 +55,14 @@ echo "AWS credentials           :"
 echo "AWS_ACCESS_KEY_ID         : ${AWS_ACCESS_KEY_ID}"
 echo "AWS_ASSUME_ROLE_ARN       : ${AWS_ASSUME_ROLE_ARN}"
 
+# Go and try to assume the role.
+readonly CREDS_JSON=$(aws sts assume-role \
+                 --role-arn "${AWS_ASSUME_ROLE_ARN}" \
+                 --role-session-name "get.pulumi.com-travis-job-${TRAVIS_JOB_NUMBER}")
+
+export AWS_ACCESS_KEY_ID=$(echo "${CREDS_JSON}"     | jq ".Credentials.AccessKeyId" --raw-output)
+export AWS_SECRET_ACCESS_KEY=$(echo "${CREDS_JSON}" | jq ".Credentials.SecretAccessKey" --raw-output)
+export AWS_SECURITY_TOKEN=$(echo "${CREDS_JSON}"    | jq ".Credentials.SessionToken" --raw-output)
+
 echo "Current AWS identity:"
 aws sts get-caller-identity
