@@ -3,11 +3,8 @@
 # Set the environment variables to use the right AWS account/identity
 # based on the current branch.
 
-set -o nounset -o errexit -o pipefail
-
 if [ -z "${TRAVIS_BRANCH:-}" ]; then
     echo "WARNING: TRAVIS_BRANCH not set. Aborting."
-    return
 fi
 
 # When running on CI, which stack should we update? (And as a result, which

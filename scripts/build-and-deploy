@@ -7,13 +7,9 @@ yarn install
 case "${TRAVIS_BRANCH}" in
     "master")
         STACK_NAME="staging"
-        export AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID_STAGING}
-        export AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY_STAGING}
         ;;
     "production")
         STACK_NAME="production"
-        export AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID_PRODUCTION}
-        export AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY_PRODUCTION}
         ;;
     *)
         echo "not deploying as TRAVIS_BRANCH is not 'master' or 'production'"
