@@ -6,3 +6,9 @@ install:
     - export PATH=$HOME/.pulumi/bin:$PATH
 script:
     - ./scripts/build-and-deploy
+before_install:
+    # Install a specific version of node. While this is crazy-old,
+    # grpc is supported on it. We should switch to something later
+    # when we can do so without any build woes.
+    - nvm install v10.16.3
+    - nvm use
