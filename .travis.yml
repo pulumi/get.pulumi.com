@@ -5,8 +5,12 @@ install:
     - curl -fsSL https://get.pulumi.com | bash -s
     - export PATH=$HOME/.pulumi/bin:$PATH
 script:
+    - ./scripts/configure-credentials.sh
     - ./scripts/build-and-deploy
 before_install:
+    # Install the AWS CLI.
+    - pip install --upgrade --user awscli
+
     # Install a specific version of node. While this is crazy-old,
     # grpc is supported on it. We should switch to something later
     # when we can do so without any build woes.
