@@ -35,7 +35,8 @@ case ${TRAVIS_BRANCH} in
         export AWS_ASSUME_ROLE_ARN="${CI_PRODUCTION_ROLE_ARN}"
         ;;
     *)
-        echo "WARNING: Did not recognize TRAVIS_BRANCH (${TRAVIS_BRANCH}), not assuming AWS IAM Role."
+        echo "WARNING: Did not recognize TRAVIS_BRANCH (${TRAVIS_BRANCH}), defaulting to staging."
+        export AWS_ASSUME_ROLE_ARN="${CI_STAGING_ROLE_ARN}"
         ;;
 esac
 
