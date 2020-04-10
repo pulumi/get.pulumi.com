@@ -4,7 +4,7 @@
 # based on the current branch.
 
 if [ -z "${TRAVIS_BRANCH:-}" ]; then
-    echo "WARNING: TRAVIS_BRANCH not set. Aborting."
+    echo "WARNING: TRAVIS_BRANCH not set."
 fi
 
 # When running on CI, which stack should we update? (And as a result, which
