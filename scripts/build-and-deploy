@@ -19,6 +19,9 @@ esac
 
 pulumi stack select "pulumi/get-pulumi-com-${STACK_NAME}"
 
+echo "Deploying stack 'pulumi/get-pulumi-com-${STACK_NAME}'. Current user:"
+aws sts get-caller-identity
+
 case "${TRAVIS_EVENT_TYPE}" in
     "push")
         pulumi update --yes
