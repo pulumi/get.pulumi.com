@@ -39,10 +39,6 @@ case "${TRAVIS_EVENT_TYPE}-${TRAVIS_BRANCH}" in
         export AWS_ASSUME_ROLE_ARN="${CI_PRODUCTION_ROLE_ARN}"
         export TARGET_STACK="pulumi/get-pulumi-com/production"
         ;;
-    "push-*")
-        echo "Push job for an unknown branch. Ignoring."
-        exit 0
-        ;;
 
     # Pull requests trigger previews.
     "pull_request-master")
@@ -55,14 +51,9 @@ case "${TRAVIS_EVENT_TYPE}-${TRAVIS_BRANCH}" in
         export AWS_ASSUME_ROLE_ARN="${CI_PRODUCTION_ROLE_ARN}"
         export TARGET_STACK="pulumi/get-pulumi-com/production"
         ;;
-    "pull_request-*")
-        echo "Pull Request which will be merged into an unknown branch. Ignoring."
-        exit 0
-        ;;
 
-    # Some other Travis job type, ignore.
     *)
-        echo "Ignoring other Travis CI job type. Ignoring."
+        echo "${TRAVIS_EVENT_TYPE} to unknown branch. Ignoring job."
         exit 0
         ;;
 esac
