@@ -87,7 +87,7 @@ export AWS_ACCESS_KEY_ID=$(echo "${CREDS_JSON}"     | jq ".Credentials.AccessKey
 export AWS_SECRET_ACCESS_KEY=$(echo "${CREDS_JSON}" | jq ".Credentials.SecretAccessKey" --raw-output)
 export AWS_SESSION_TOKEN=$(echo "${CREDS_JSON}"     | jq ".Credentials.SessionToken" --raw-output)
 
-echo "Current AWS identity:"
+echo "AWS identity:"
 aws sts get-caller-identity
 
 # Run Pulumi!
