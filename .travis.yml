@@ -5,8 +5,7 @@ install:
     - curl -fsSL https://get.pulumi.com | bash -s
     - export PATH=$HOME/.pulumi/bin:$PATH
 script:
-    - source ./scripts/configure-credentials.sh
-    - ./scripts/build-and-deploy
+    - ./scripts/pulumi-ci.sh
 before_install:
     # Install the AWS CLI.
     - pip install --upgrade --user awscli
