@@ -26,6 +26,7 @@ export AWS_SECRET_ACCESS_KEY="${CI_AWS_SECRET_ACCESS_KEY}"
 # The "get-pulumi-com" project has two stacks:
 # - pulumi/get-pulumi-com/staging, which is updated on pushes to the "master" branch.
 # - pulumi/get-pulumi-com/production, which is updated on pushes to the "production" branch.
+echo "Inferring what to do from '${TRAVIS_EVENT_TYPE}-${TRAVIS_BRANCH}'..."
 case "${TRAVIS_EVENT_TYPE}-${TRAVIS_BRANCH}" in
     # Push jobs trigger updates.
     "push-master")
@@ -61,12 +62,12 @@ case "${TRAVIS_EVENT_TYPE}-${TRAVIS_BRANCH}" in
 
     # Some other Travis job type, ignore.
     *)
-        echo "Ignoring Travis CI job. Ignoring."
+        echo "Ignoring other Travis CI job type. Ignoring."
         exit 0
         ;;
 esac
 
-echo "Inferred CI Operation:"
+echo "Inferred CI Operation"
 echo "ACTION              : ${ACTION}"
 echo "AWS_ASSUME_ROLE_ARN : ${AWS_ASSUME_ROLE_ARN}"
 echo "TARGET_STACK        : ${TARGET_STACK}"
@@ -81,7 +82,7 @@ aws configure set region "${AWS_REGION:-us-west-2}"
 readonly CREDS_JSON=$(aws sts assume-role \
                  --role-arn "${AWS_ASSUME_ROLE_ARN}" \
                  --role-session-name "get.pulumi.com-travis-job-${TRAVIS_JOB_NUMBER}" \
-                 --external-id "${TARGET_STACK_NAME}")
+                 --external-id "${TARGET_STACK}")
 
 export AWS_ACCESS_KEY_ID=$(echo "${CREDS_JSON}"     | jq ".Credentials.AccessKeyId" --raw-output)
 export AWS_SECRET_ACCESS_KEY=$(echo "${CREDS_JSON}" | jq ".Credentials.SecretAccessKey" --raw-output)
@@ -95,7 +96,7 @@ aws sts get-caller-identity
 cd infrastructure
 yarn install
 
-pulumi stack select "${TARGET_STACK_NAME}"
+pulumi stack select "${TARGET_STACK}"
 
 case ${ACTION} in
     "preview")
