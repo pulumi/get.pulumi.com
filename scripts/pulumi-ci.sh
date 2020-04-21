@@ -83,10 +83,14 @@ readonly CREDS_JSON=$(aws sts assume-role \
                  --role-arn "${AWS_ASSUME_ROLE_ARN}" \
                  --role-session-name "get.pulumi.com-travis-job-${TRAVIS_JOB_NUMBER}" \
                  --external-id "${TARGET_STACK}")
-
 export AWS_ACCESS_KEY_ID=$(echo "${CREDS_JSON}"     | jq ".Credentials.AccessKeyId" --raw-output)
 export AWS_SECRET_ACCESS_KEY=$(echo "${CREDS_JSON}" | jq ".Credentials.SecretAccessKey" --raw-output)
 export AWS_SESSION_TOKEN=$(echo "${CREDS_JSON}"     | jq ".Credentials.SessionToken" --raw-output)
+
+if [ -z ${AWS_SESSION_TOKEN} ]; then
+    echo "Looks like AWS_SESSION_TOKEN not set. Was there a problem assuming role?"
+    exit 1
+fi
 
 echo "AWS identity:"
 aws sts get-caller-identity
