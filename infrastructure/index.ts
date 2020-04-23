@@ -46,13 +46,63 @@ aws.getCallerIdentity().then((callerIdentity) => {
     const denyListPolicy = new aws.s3.BucketPolicy("deny-list", denyListPolicyState);
 });
 
-
 const logsBucket = new aws.s3.Bucket(`${fullDomain}-logs`, {
     acl: "log-delivery-write",
 });
 
+// Times, in seconds.
+const oneHour = 60 * 60;
+const oneDay = 24 * oneHour;
+
+// Faux configuration for the "rel.pulumi.com" S3 bucket. It isn't managed by this stack, and only exists in
+// the production AWS account. (So `aws.s3.Bucket.get` is frought with peril.)
+const releaseBucketState = {
+    // String to uniquely identify the bucket as a "target origin ID" when configuring the CloudFront distribution.
+    originId: "S3-rel.pulumi.com",
+    // Domain name of the S3 bucket, which CloudFront will use to read its contents.
+    domainName: "rel.pulumi.com.s3.us-west-2.amazonaws.com",
+};
+
+// Returns a CloudFront cache behavior serving content via `releaseBucketState`.
+function serveFromReleasesBucket(pathPattern: string): aws.types.input.cloudfront.DistributionOrderedCacheBehavior {
+    return {
+        // Pattern, e.g. images/*.jpg, that the behavior belongs to.
+        pathPattern: pathPattern,
+
+        allowedMethods: ["GET", "HEAD"],
+        cachedMethods: ["GET", "HEAD"],
+        forwardedValues: {
+            cookies: {
+                forward: "none",
+            },
+            queryString: false,
+        },
+        targetOriginId: releaseBucketState.originId,
+        viewerProtocolPolicy: "redirect-to-https",
+        minTtl: 0,
+        defaultTtl: oneHour,
+        maxTtl: oneDay,
+        compress: true,
+    };
+}
+
+// Unique CloudFront identity we associate with the s3://rel.pulumi.com origin in the CDN. This will
+// allow us to grant just CloudFront access to the bucket's contents (and not need to make the contents
+// publicly visible). See: https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/private-content-restricting-access-to-s3.html
+const releasesBucketOai = new aws.cloudfront.OriginAccessIdentity("releasesBucketOAI", {
+    comment: `CloudFront Origin Access Identity for the get.pulumi.com (${pulumi.getStack()} stack)`,
+});
+export const originAccessIdentity = releasesBucketOai.iamArn;
+
 const distributionArgs: aws.cloudfront.DistributionArgs = {
     aliases: [fullDomain],
+    // An ordered list of cache behaviors, in precidence order.
+    orderedCacheBehaviors: [
+        serveFromReleasesBucket("/releases/plugins/*"),
+        serveFromReleasesBucket("/releases/sdk/*"),
+    ],
+    // Last cache behavior, in case no other behavior matched.
+    // Serve everything else from the "get.pulumi.com" content bucket.
     defaultCacheBehavior: {
         allowedMethods: ["GET", "HEAD"],
         cachedMethods: ["GET", "HEAD"],
@@ -65,15 +115,32 @@ const distributionArgs: aws.cloudfront.DistributionArgs = {
         targetOriginId: contentBucket.bucketDomainName.apply(d => `S3-${d}`),
         viewerProtocolPolicy: "redirect-to-https",
         minTtl: 0,
-        defaultTtl: 60,
-        maxTtl: 60,
+        defaultTtl: oneHour, // Default is one day.
+        maxTtl: oneDay,  // Default is one year.
         compress: true,
     },
     enabled: true,
-    origins: [{
-        domainName: contentBucket.bucketDomainName,
-        originId: contentBucket.bucketDomainName.apply(d => `S3-${d}`),
-    }],
+    origins: [
+        // S3-<content-bucket-name>, where we serve most get.pulumi.com content.
+        {
+            domainName: contentBucket.bucketDomainName,
+            originId: contentBucket.bucketDomainName.apply(d => `S3-${d}`),
+        },
+        // The s3://rel.pulumi.com, where we publish plugins and SDK releases to.
+        // This stack doesn't manage that bucket, and it may even exist in a different
+        // AWS account. We just hook things up so that the "S3-rel.pulumi.com" origin
+        // will route to that bucket's contents. (Which we assume are readable, etc.)
+        {
+            domainName: releaseBucketState.domainName,
+            originId: releaseBucketState.originId,
+            // IMPORTANT: Unlike `contentBucket`, objects aren't inheritly world readable. So
+            // we need to create an "Origin Access Identity" for Cloud Front. This identity
+            // then needs to be granted access on the rel.pulumi.com Bucket's access policy.
+            s3OriginConfig: {
+                originAccessIdentity: releasesBucketOai.cloudfrontAccessIdentityPath,
+            },
+        },
+    ],
     restrictions: {
         geoRestriction: {
             restrictionType: "none",
@@ -92,12 +159,12 @@ const distributionArgs: aws.cloudfront.DistributionArgs = {
     defaultRootObject: "install.sh",
 };
 
-const cloudfront = new aws.cloudfront.Distribution(`${fullDomain}-cf`, distributionArgs);
+const cloudfront = new aws.cloudfront.Distribution(`${fullDomain}-cf`, distributionArgs, { dependsOn: [releasesBucketOai] });
 
 const record = new aws.route53.Record(`${fullDomain}-record`, {
     name: subDomain,
     type: "A",
-    zoneId: aws.route53.getZone({name: domain}).then(x => x.zoneId),
+    zoneId: aws.route53.getZone({ name: domain }).then(x => x.zoneId),
     aliases: [
         {
             name: cloudfront.domainName,
