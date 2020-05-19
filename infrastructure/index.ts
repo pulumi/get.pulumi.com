@@ -59,9 +59,8 @@ const uploadReleaseRole = new aws.iam.Role("PulumiUploadRelease", {
                 Effect: "Allow",
                 Principal: {
                     AWS: [
-                        // Pulumi CI AWS account. The IAM User we use for CI will need to be
-                        // give permissions to assume this role.
-                        "arn:aws:iam::894850187425:root",
+                        // Pulumi's AWS bastion account. The IAM Users we use for CI/CD will be defined there.
+                        "arn:aws:iam::318722933755:root",
                     ],
                 },
                 Action: "sts:AssumeRole",
