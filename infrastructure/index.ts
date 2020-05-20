@@ -74,6 +74,16 @@ const uploadReleaseRole = new aws.iam.Role("PulumiUploadRelease", {
                     },
                 },
             },
+            // Allow the assumer to also set session tags.
+            {
+                Effect: "Allow",
+                Principal: {
+                    AWS: [
+                        "arn:aws:iam::318722933755:root",
+                    ],
+                },
+                Action: "sts:TagSession",
+            }
         ],
     },
     tags: {
