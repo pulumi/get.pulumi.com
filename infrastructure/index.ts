@@ -46,6 +46,82 @@ aws.getCallerIdentity().then((callerIdentity) => {
     const denyListPolicy = new aws.s3.BucketPolicy("deny-list", denyListPolicyState);
 });
 
+// IAM Role available to CI/CD bots to allow them to upload binaries as part of the release process.
+// Previously we copied them to s3://rel.pulumi.com, but we later changed to uploading the binaries
+// directly to s3://get.pulumi.com.
+const uploadReleaseRole = new aws.iam.Role("PulumiUploadRelease", {
+    name: "PulumiUploadRelease",
+    description: "Upload new releases of the Pulumi SDK to get.pulumi.com.",
+    assumeRolePolicy: {
+        Version: "2012-10-17",
+        Statement: [
+            {
+                Effect: "Allow",
+                Principal: {
+                    AWS: [
+                        // Pulumi's AWS bastion account. The IAM Users we use for CI/CD will be defined there.
+                        "arn:aws:iam::318722933755:root",
+                    ],
+                },
+                Action: "sts:AssumeRole",
+                // Block assuming this role unless the external ID matches the following. This
+                // isn't a security measure so much as a double-checking intent.
+                Condition: {
+                    StringEquals: {
+                        "sts:ExternalId": [
+                            "upload-pulumi-release"
+                        ],
+                    },
+                },
+            },
+            // Allow the assumer to also set session tags.
+            {
+                Effect: "Allow",
+                Principal: {
+                    AWS: [
+                        "arn:aws:iam::318722933755:root",
+                    ],
+                },
+                Action: "sts:TagSession",
+            }
+        ],
+    },
+    tags: {
+        "stack": `${pulumi.getProject()}/${pulumi.getStack()}`,
+    },
+});
+
+// ARN of the role we need to hook up to our CI bots to enable them to upload releases.
+export const uploadReleaseRoleArn = uploadReleaseRole.arn;
+
+// Permissions granted to those who assume the upload releases role.
+const uploadReleasePolicy = new aws.iam.Policy("PulumiUploadReleasePolicy", {
+    name: "PulumiUploadReleasePolicy",
+    description: "Upload Pulumi ",
+    policy: {
+        Version: "2012-10-17",
+        Statement: [
+            {
+                Effect: "Allow",
+                // Only allow uploading data. So `aws s3 cp` or `aws s3 ls` won't work.
+                Action: [
+                    "s3:PutObject",
+                    "s3:PutObjectAcl",
+                ],
+                // Only allow uploading objects with certain prefixes.
+                Resource: [
+                    pulumi.interpolate`${contentBucket.arn}/releases/plugins/*`,
+                    pulumi.interpolate`${contentBucket.arn}/releases/sdk/*`,
+                ],
+            },
+        ],
+    },
+});
+
+const rolePolicyAttachment = new aws.iam.RolePolicyAttachment("PulumiUploadReleasePolicyAttachment", {
+    role: uploadReleaseRole,
+    policyArn: uploadReleasePolicy.arn,
+});
 
 const logsBucket = new aws.s3.Bucket(`${fullDomain}-logs`, {
     acl: "log-delivery-write",
@@ -97,7 +173,7 @@ const cloudfront = new aws.cloudfront.Distribution(`${fullDomain}-cf`, distribut
 const record = new aws.route53.Record(`${fullDomain}-record`, {
     name: subDomain,
     type: "A",
-    zoneId: aws.route53.getZone({name: domain}).then(x => x.zoneId),
+    zoneId: aws.route53.getZone({ name: domain }).then(x => x.zoneId),
     aliases: [
         {
             name: cloudfront.domainName,
