@@ -87,7 +87,7 @@ const uploadReleaseRole = new aws.iam.Role("PulumiUploadRelease", {
         ],
     },
     tags: {
-        "stack": pulumi.getStack(),
+        "stack": `${pulumi.getProject()}/${pulumi.getStack()}`,
     },
 });
 
