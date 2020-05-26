@@ -140,9 +140,13 @@ const distributionArgs: aws.cloudfront.DistributionArgs = {
         },
         targetOriginId: contentBucket.bucketDomainName.apply(d => `S3-${d}`),
         viewerProtocolPolicy: "redirect-to-https",
+
+        // TTLs. These are used since presumably there aren't any cache control settings
+        // for the individual S3 objects.
         minTtl: 0,
-        defaultTtl: 60,
-        maxTtl: 60,
+        defaultTtl: 604800,  // One week.
+        maxTtl: 31536000,  // One year, the default.
+
         compress: true,
     },
     enabled: true,
@@ -150,6 +154,10 @@ const distributionArgs: aws.cloudfront.DistributionArgs = {
         domainName: contentBucket.bucketDomainName,
         originId: contentBucket.bucketDomainName.apply(d => `S3-${d}`),
     }],
+    // Cache content from all CloudFront edge locations, meaning it will have the
+    // best performance. Other price classes restrict some locations, which means
+    // you would pay less for hosting the CDN.
+    priceClass: "PriceClass_All",
     restrictions: {
         geoRestriction: {
             restrictionType: "none",
