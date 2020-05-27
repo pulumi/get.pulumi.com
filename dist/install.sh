@@ -18,7 +18,8 @@ print_unsupported_platform()
 
 say_green()
 {
-    printf "%b%s%b\\n" "${GREEN}" "$1" "${RESET}"
+    [ -z "${SILENT}" ] && printf "%b%s%b\\n" "${GREEN}" "$1" "${RESET}"
+    return 0
 }
 
 say_red()
@@ -28,17 +29,20 @@ say_red()
 
 say_yellow()
 {
-    printf "%b%s%b\\n" "${YELLOW}" "$1" "${RESET}"
+    [ -z "${SILENT}" ] && printf "%b%s%b\\n" "${YELLOW}" "$1" "${RESET}"
+    return 0
 }
 
 say_blue()
 {
-    printf "%b%s%b\\n" "${BLUE}" "$1" "${RESET}"
+    [ -z "${SILENT}" ] && printf "%b%s%b\\n" "${BLUE}" "$1" "${RESET}"
+    return 0
 }
 
 say_white()
 {
-    printf "%b%s%b\\n" "${WHITE}" "$1" "${RESET}"
+    [ -z "${SILENT}" ] && printf "%b%s%b\\n" "${WHITE}" "$1" "${RESET}"
+    return 0
 }
 
 at_exit()
@@ -53,9 +57,22 @@ at_exit()
 trap at_exit EXIT
 
 VERSION=""
-if [ "$1" = "--version" ] && [ "$2" != "latest" ]; then
-    VERSION=$2
-else
+SILENT=""
+while [ $# -gt 0 ]; do
+    case "$1" in
+        --version)
+            if [ "$2" != "latest" ]; then
+                VERSION=$2
+            fi
+            ;;
+        --silent)
+            SILENT="--silent"
+            ;;
+     esac
+     shift
+done
+
+if [ -z "${VERSION}" ]; then
     if ! VERSION=$(curl --fail --silent -L "https://www.pulumi.com/latest-version"); then
         >&2 say_red "error: could not determine latest version of Pulumi, try passing --version X.Y.Z to"
         >&2 say_red "       install an explicit version"
@@ -90,7 +107,7 @@ say_white "+ Downloading ${TARBALL_URL}..."
 
 TARBALL_DEST=$(mktemp -t pulumi.tar.gz.XXXXXXXXXX)
 
-if curl --fail -L -o "${TARBALL_DEST}" "${TARBALL_URL}"; then
+if curl --fail $(printf %s "${SILENT}") -L -o "${TARBALL_DEST}" "${TARBALL_URL}"; then
     say_white "+ Extracting to $HOME/.pulumi/bin"
 
     # If `~/.pulumi/bin exists, clear it out
