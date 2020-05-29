@@ -7,6 +7,8 @@ import * as path from "path";
 import * as aws from "@pulumi/aws";
 import * as pulumi from "@pulumi/pulumi";
 
+import requestRewriteLambda from "./requestRewriter";
+
 const cfg = new pulumi.Config(pulumi.getProject());
 
 const subDomain = "get";
@@ -148,6 +150,12 @@ const distributionArgs: aws.cloudfront.DistributionArgs = {
         maxTtl: 31536000,  // One year, the default.
 
         compress: true,
+
+        // Include a Lambda to rewrite origin requests including a '+' to using '%2B' since S3 interprets '+' incorrectly
+        lambdaFunctionAssociations: [{
+                eventType: "origin-request",
+                lambdaArn: requestRewriteLambda,
+        }],
     },
     enabled: true,
     origins: [{
