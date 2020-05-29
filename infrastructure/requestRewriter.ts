@@ -27,7 +27,7 @@ const rolePolicy = new aws.iam.RolePolicyAttachment(`${name}-RolePolicyAttachmen
     policyArn: aws.iam.ManagedPolicies.AWSLambdaBasicExecutionRole,
 });
 
-const lambda = new aws.lambda.CallbackFunction("corp-auth-callback", {
+const lambda = new aws.lambda.CallbackFunction(`${name}-Function`, {
     publish: true,
     role,
     timeout: 5,
