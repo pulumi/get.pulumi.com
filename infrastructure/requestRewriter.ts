@@ -27,6 +27,8 @@ const rolePolicy = new aws.iam.RolePolicyAttachment(`${name}-RolePolicyAttachmen
     policyArn: aws.iam.ManagedPolicies.AWSLambdaBasicExecutionRole,
 });
 
+// Some resources _must_ be put in us-east-1, such as Lambda at Edge.
+const awsUsEast1 = new aws.Provider("us-east-1", { region: "us-east-1" });
 const lambda = new aws.lambda.CallbackFunction(`${name}-Function`, {
     publish: true,
     role,
@@ -34,14 +36,17 @@ const lambda = new aws.lambda.CallbackFunction(`${name}-Function`, {
     callback: async (event: any, context: aws.lambda.Context) => {
         const request = event.Records[0].cf.request;
         // if the origin request includes a '+' we should rewrite it as '%2B' for S3
+        console.log("Recieving request for", request.uri);
         if (request.uri.includes("+")) {
+            const old = request.uri;
             const allPlus = /\+/g;
             request.uri = request.uri.replace(allPlus, "%2B");
+            console.log(`rewriting request from ${old} to ${request.uri}`);
         }
 
         return request;
     }
-});
+}, { provider: awsUsEast1 });
 
 // Not using qualifiedArn here due to some bugs around sometimes returning $LATEST
 export default pulumi.interpolate`${lambda.arn}:${lambda.version}`;
