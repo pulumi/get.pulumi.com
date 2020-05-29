@@ -34,7 +34,7 @@ const lambda = new aws.lambda.CallbackFunction(`${name}-Function`, {
     callback: async (event: any, context: aws.lambda.Context) => {
         const request = event.Records[0].cf.request;
         // if the origin request includes a '+' we should rewrite it as '%2B' for S3
-        if (request.uri.contains("+")) {
+        if (request.uri.includes("+")) {
             const allPlus = /\+/g;
             request.uri = request.uri.replace(allPlus, "%2B");
         }
