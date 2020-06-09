@@ -23,7 +23,7 @@ const contentBucket = new aws.s3.Bucket(`${fullDomain}-bucket`, {
 
 // contentBucket needs to have the "public-read" ACL so its contents can be ready by CloudFront and
 // served. But we deny the s3:ListBucket permission to prevent unintended disclosure of the bucket's
-// contents.
+// contents. We also explicitly grant GetObject, in the event that the per-file ACL isn't set.
 aws.getCallerIdentity().then((callerIdentity) => {
     const denyListPolicyState: aws.s3.BucketPolicyArgs = {
         bucket: contentBucket.bucket,
@@ -40,6 +40,13 @@ aws.getCallerIdentity().then((callerIdentity) => {
                             "aws:PrincipalAccount": callerIdentity.accountId,
                         },
                     },
+                },
+                {
+                    Sid: "PluginsPublicRead",
+                    Effect: "Allow",
+                    Principal: "*",
+                    Action: ["s3:GetObject"],
+                    Resource: [`${arn}/releases/plugins/*`],
                 },
             ],
         })),
@@ -153,8 +160,8 @@ const distributionArgs: aws.cloudfront.DistributionArgs = {
 
         // Include a Lambda to rewrite origin requests including a '+' to using '%2B' since S3 interprets '+' incorrectly
         lambdaFunctionAssociations: [{
-                eventType: "origin-request",
-                lambdaArn: requestRewriteLambda,
+            eventType: "origin-request",
+            lambdaArn: requestRewriteLambda,
         }],
     },
     enabled: true,
