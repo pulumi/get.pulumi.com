@@ -4,6 +4,15 @@ $ProgressPreference="SilentlyContinue"
 
 # Some versions of PowerShell do not support Tls1.2 out of the box, but pulumi.com requires it
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+
+# Query pulumi.com/latest-version for the most recent release. Because this approach
+# is now used by third parties as well (e.g., GitHub Actions virtual environments),
+# changes to this API should be made with care to avoid breaking any services that
+# rely on it (and ideally be accompanied by PRs to update them accordingly). Known
+# consumers of this API include:
+#
+# * https://github.com/actions/virtual-environments
+#
 $latestVersion = (Invoke-WebRequest -UseBasicParsing https://www.pulumi.com/latest-version).Content.Trim()
 
 $downloadUrl = "https://get.pulumi.com/releases/sdk/pulumi-v${latestVersion}-windows-x64.zip"
@@ -49,7 +58,7 @@ try {
         Write-Host "Added $binRoot to the $PATH. Changes may not be visible until after a restart."
     }
     $envKey.Close();
-} catch { 
+} catch {
 }
 
 if ($env:PATH -notlike "*$binRoot*") {
