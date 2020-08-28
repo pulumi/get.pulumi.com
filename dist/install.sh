@@ -73,6 +73,16 @@ while [ $# -gt 0 ]; do
 done
 
 if [ -z "${VERSION}" ]; then
+
+    # Query pulumi.com/latest-version for the most recent release. Because this approach
+    # is now used by third parties as well (e.g., GitHub Actions virtual environments),
+    # changes to this API should be made with care to avoid breaking any services that
+    # rely on it (and ideally be accompanied by PRs to update them accordingly). Known
+    # consumers of this API include:
+    #
+    # * https://github.com/actions/virtual-environments
+    #
+
     if ! VERSION=$(curl --fail --silent -L "https://www.pulumi.com/latest-version"); then
         >&2 say_red "error: could not determine latest version of Pulumi, try passing --version X.Y.Z to"
         >&2 say_red "       install an explicit version"
