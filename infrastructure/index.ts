@@ -48,6 +48,13 @@ aws.getCallerIdentity().then((callerIdentity) => {
                     Action: ["s3:GetObject"],
                     Resource: [`${arn}/releases/plugins/*`],
                 },
+                {
+                    Sid: "SDKPublicRead",
+                    Effect: "Allow",
+                    Principal: "*",
+                    Action: ["s3:GetObject"],
+                    Resource: [`${arn}/releases/sdk/*`],
+                }
             ],
         })),
     };
