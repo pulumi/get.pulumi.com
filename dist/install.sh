@@ -117,15 +117,20 @@ say_white "+ Downloading ${TARBALL_URL}..."
 
 TARBALL_DEST=$(mktemp -t pulumi.tar.gz.XXXXXXXXXX)
 
+if [ -z "$PULUMI_INSTALL" ];then
+   PULUMI_INSTALL="$HOME/.pulumi"
+fi
+
 if curl --fail $(printf %s "${SILENT}") -L -o "${TARBALL_DEST}" "${TARBALL_URL}"; then
-    say_white "+ Extracting to $HOME/.pulumi/bin"
+    say_white "+ Extracting to ${PULUMI_INSTALL}/bin"
+    say_white "  (use environment variable 'export PULUMI_INSTALL=<location> to use a custom location)"
 
     # If `~/.pulumi/bin exists, clear it out
-    if [ -e "${HOME}/.pulumi/bin" ]; then
-        rm -rf "${HOME}/.pulumi/bin"
+    if [ -e "${PULUMI_INSTALL}/bin" ]; then
+        rm -rf "${PULUMI_INSTALL}/bin"
     fi
 
-    mkdir -p "${HOME}/.pulumi"
+    mkdir -p "${PULUMI_INSTALL}"
 
     # Yarn's shell installer does a similar dance of extracting to a temp
     # folder and copying to not depend on additional tar flags
@@ -136,9 +141,9 @@ if curl --fail $(printf %s "${SILENT}") -L -o "${TARBALL_DEST}" "${TARBALL_URL}"
     # format if we detect it. Newer tarballs just have all the binaries in
     # the top level Pulumi folder.
     if [ -d "${EXTRACT_DIR}/pulumi/bin" ]; then
-        mv "${EXTRACT_DIR}/pulumi/bin" "${HOME}/.pulumi/"
+        mv "${EXTRACT_DIR}/pulumi/bin" "${PULUMI_INSTALL}/"
     else
-        cp -r "${EXTRACT_DIR}/pulumi/." "${HOME}/.pulumi/bin/"
+        cp -r "${EXTRACT_DIR}/pulumi/." "${PULUMI_INSTALL}/bin/"
     fi
 
     rm -f "${TARBALL_DEST}"
@@ -151,50 +156,55 @@ fi
 # Now that we have installed Pulumi, if it is not already on the path, let's add a line to the
 # user's profile to add the folder to the PATH for future sessions.
 if ! command -v pulumi >/dev/null; then
-    # If we can, we'll add a line to the user's .profile adding $HOME/.pulumi/bin to the PATH
+    # If we can, we'll add a line to the user's .profile adding ${PULUMI_INSTALL}/bin to the PATH
     SHELL_NAME=$(basename "${SHELL}")
-    PROFILE_FILE=""
 
-    case "${SHELL_NAME}" in
-        "bash")
-            # Terminal.app on macOS prefers .bash_profile to .bashrc, so we prefer that
-            # file when trying to put our export into a profile. On *NIX, .bashrc is
-            # prefered as it is sourced for new interactive shells.
-            if [ "$(uname)" != "Darwin" ]; then
-                if [ -e "${HOME}/.bashrc" ]; then
-                    PROFILE_FILE="${HOME}/.bashrc"
-                elif [ -e "${HOME}/.bash_profile" ]; then
-                    PROFILE_FILE="${HOME}/.bash_profile"
-                fi
-            else
-                if [ -e "${HOME}/.bash_profile" ]; then
-                    PROFILE_FILE="${HOME}/.bash_profile"
-                elif [ -e "${HOME}/.bashrc" ]; then
-                    PROFILE_FILE="${HOME}/.bashrc"
-                fi
-            fi
-            ;;
-        "zsh")
-            if [ -e "${ZDOTDIR:-$HOME}/.zshrc" ]; then
-                PROFILE_FILE="${ZDOTDIR:-$HOME}/.zshrc"
-            fi
-            ;;
-    esac
-
-    if [ ! -z "${PROFILE_FILE}" ]; then
-        LINE_TO_ADD="export PATH=\$PATH:\$HOME/.pulumi/bin"
-        if ! grep -q "# add Pulumi to the PATH" "${PROFILE_FILE}"; then
-            say_white "+ Adding \$HOME/.pulumi/bin to \$PATH in ${PROFILE_FILE}"
-            printf "\\n# add Pulumi to the PATH\\n%s\\n" "${LINE_TO_ADD}" >> "${PROFILE_FILE}"
-        fi
-
-        EXTRA_INSTALL_STEP="+ Please restart your shell or add $HOME/.pulumi/bin to your \$PATH"
-    else
-        EXTRA_INSTALL_STEP="+ Please add $HOME/.pulumi/bin to your \$PATH"
+    if [ -z "$PULUMI_PROFILE_FILE" ];then
+       PULUMI_PROFILE_FILE=""
+       case "${SHELL_NAME}" in
+           "bash")
+               # Terminal.app on macOS prefers .bash_profile to .bashrc, so we prefer that
+               # file when trying to put our export into a profile. On *NIX, .bashrc is
+               # prefered as it is sourced for new interactive shells.
+               if [ "$(uname)" != "Darwin" ]; then
+                   if [ -e "${HOME}/.bashrc" ]; then
+                       PULUMI_PROFILE_FILE="${HOME}/.bashrc"
+                   elif [ -e "${HOME}/.bash_profile" ]; then
+                       PULUMI_PROFILE_FILE="${HOME}/.bash_profile"
+                   fi
+               else
+                   if [ -e "${HOME}/.bash_profile" ]; then
+                       PULUMI_PROFILE_FILE="${HOME}/.bash_profile"
+                   elif [ -e "${HOME}/.bashrc" ]; then
+                       PULUMI_PROFILE_FILE="${HOME}/.bashrc"
+                   fi
+               fi
+               ;;
+           "zsh")
+               if [ -e "${ZDOTDIR:-$HOME}/.zshrc" ]; then
+                   PULUMI_PROFILE_FILE="${ZDOTDIR:-$HOME}/.zshrc"
+               fi
+               ;;
+       esac
+    elif [ "${PULUMI_PROFILE_FILE}" = "no" ];then
+       PULUMI_PROFILE_FILE=""
     fi
-elif [ "$(command -v pulumi)" != "$HOME/.pulumi/bin/pulumi" ]; then
+    if [ ! -z "${PULUMI_PROFILE_FILE}" ]; then
+        LINE_TO_ADD="export PATH=\$PATH:${PULUMI_INSTALL}/bin"
+        if ! grep -q "# add Pulumi to the PATH" "${PULUMI_PROFILE_FILE}"; then
+            say_white "+ Adding ${PULUMI_INSTALL}/bin to \$PATH in ${PULUMI_PROFILE_FILE}"
+            say_white "  (use environment variable 'export PULUMI_PROFILE_FILE=<location> to use a custom file or use 'export PULUMI_PROFILE_FILE=no' to skip this step)"
+            printf "\\n# add Pulumi to the PATH\\n%s\\n" "${LINE_TO_ADD}" >> "${PULUMI_PROFILE_FILE}"
+        else
+            say_white "+ ${PULUMI_INSTALL}/bin already added to \$PATH in ${PULUMI_PROFILE_FILE}"
+        fi
+        EXTRA_INSTALL_STEP="+ Please restart your shell or add ${PULUMI_INSTALL}/bin to your \$PATH"
+    else
+        EXTRA_INSTALL_STEP="+ Please add ${PULUMI_INSTALL}/bin to your \$PATH"
+    fi
+elif [ "$(command -v pulumi)" != "${PULUMI_INSTALL}/bin/pulumi" ]; then
     say_yellow
-    say_yellow "warning: Pulumi has been installed to $HOME/.pulumi/bin, but it looks like there's a different copy"
+    say_yellow "warning: Pulumi has been installed to ${PULUMI_INSTALL}/bin, but it looks like there's a different copy"
     say_yellow "         on your \$PATH at $(dirname "$(command -v pulumi)"). You'll need to explicitly invoke the"
     say_yellow "         version you just installed or modify your \$PATH to prefer this location."
 fi
