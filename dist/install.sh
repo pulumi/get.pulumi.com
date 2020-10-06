@@ -47,6 +47,7 @@ say_white()
 
 at_exit()
 {
+    # shellcheck disable=SC2181
     if [ "$?" -ne 0 ]; then
         >&2 say_red
         >&2 say_red "We're sorry, but it looks like something might have gone wrong during installation."
@@ -117,7 +118,7 @@ say_white "+ Downloading ${TARBALL_URL}..."
 
 TARBALL_DEST=$(mktemp -t pulumi.tar.gz.XXXXXXXXXX)
 
-if curl --fail $(printf %s "${SILENT}") -L -o "${TARBALL_DEST}" "${TARBALL_URL}"; then
+if curl --fail "$(printf %s "${SILENT}")" -L -o "${TARBALL_DEST}" "${TARBALL_URL}"; then
     say_white "+ Extracting to $HOME/.pulumi/bin"
 
     # If `~/.pulumi/bin exists, clear it out
@@ -181,7 +182,7 @@ if ! command -v pulumi >/dev/null; then
             ;;
     esac
 
-    if [ ! -z "${PROFILE_FILE}" ]; then
+    if [ -n "${PROFILE_FILE}" ]; then
         LINE_TO_ADD="export PATH=\$PATH:\$HOME/.pulumi/bin"
         if ! grep -q "# add Pulumi to the PATH" "${PROFILE_FILE}"; then
             say_white "+ Adding \$HOME/.pulumi/bin to \$PATH in ${PROFILE_FILE}"
