@@ -31,4 +31,4 @@ jobs:
         ./dist/install.sh --silent
     - name: Run inspec
       run: |
-        inspec exec spec/inspec/
+        inspec --chef-license=accept exec spec/inspec/
