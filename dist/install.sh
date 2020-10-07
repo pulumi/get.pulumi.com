@@ -1,8 +1,6 @@
 #!/bin/sh
 set -e
 
-exit 1
-
 RESET="\\033[0m"
 RED="\\033[31;1m"
 GREEN="\\033[32;1m"
