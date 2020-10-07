@@ -13,3 +13,14 @@ jobs:
       uses: ludeeus/action-shellcheck@master
       with:
         scandir: "./dist"
+  install:
+    name: Run install script
+    strategy:
+      matrix:
+        os: [ "ubuntu", "macos" ]
+    runs-on: ${{matrix.os}}-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Run install script
+      run: |
+        bash -c dist/install.sh
