@@ -8,10 +8,7 @@ describe file("#{homedir}/.pulumi/bin") do
   it { should be_directory }
 end
 
-describe file("#{homedir}/.pulumi") do
-  it { should be_directory }
-end
-
+# FIXME: readd pulumi-language-python-exec
 installed_files = %w[
   pulumi
   pulumi-analyzer-policy
@@ -20,7 +17,6 @@ installed_files = %w[
   pulumi-language-go
   pulumi-language-nodejs
   pulumi-language-python
-  pulumi-language-python-exec
   pulumi-resource-pulumi-nodejs
   pulumi-resource-pulumi-python
 ]
