@@ -14,7 +14,7 @@ jobs:
       with:
         scandir: "./dist"
   install:
-    name: Run install script
+    name: Install & Test
     strategy:
       matrix:
         os: [ "ubuntu", "macos" ]
@@ -26,9 +26,12 @@ jobs:
       with:
         channel: current
         project: inspec
+    - name: accept chef license
+      run: |
+        inspec --chef-license=accept-silent
     - name: Run install script
       run: |
         ./dist/install.sh --silent
     - name: Run inspec
       run: |
-        inspec --chef-license=accept exec spec/inspec/
+        inspec exec spec/inspec/
