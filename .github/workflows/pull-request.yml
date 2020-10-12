@@ -21,7 +21,7 @@ jobs:
     runs-on: ${{matrix.os}}-latest
     steps:
     - uses: actions/checkout@v2
-    - name: install chef
+    - name: Install chef
       uses: actionshub/chef-install@master
       with:
         channel: current
