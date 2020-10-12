@@ -48,6 +48,8 @@ say_white()
 at_exit()
 {
     # shellcheck disable=SC2181
+    # https://github.com/koalaman/shellcheck/wiki/SC2181
+    # Disable because we don't actually know the command we're running
     if [ "$?" -ne 0 ]; then
         >&2 say_red
         >&2 say_red "We're sorry, but it looks like something might have gone wrong during installation."
