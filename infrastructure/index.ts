@@ -129,7 +129,7 @@ const uploadPolicyReleaseEcrAuthorizationTokenStatement: aws.iam.PolicyStatement
     Action: [
         "ecr:GetAuthorizationToken",
     ],
-    Resource: [pulumi.output("*")],
+    Resource: ["*"],
 };
 
 // For now, we've manually created the repos and won't manage them in this stack (there's no support in the provider).
@@ -161,19 +161,21 @@ const uploadPolicyReleaseEcrUploadImageStatement: aws.iam.PolicyStatement = {
     Resource: productionImageRepositories,
 };
 
+const uploadReleasePolicyStatement = pulumi.getStack() === "production" ? [
+    uploadPolicyReleaseContentBucketStatement,
+    uploadPolicyReleaseEcrAuthorizationTokenStatement,
+    uploadPolicyReleaseEcrUploadImageStatement,
+] : [
+    uploadPolicyReleaseContentBucketStatement,
+];
+
 // Permissions granted to those who assume the upload releases role.
 const uploadReleasePolicy = new aws.iam.Policy("PulumiUploadReleasePolicy", {
     name: "PulumiUploadReleasePolicy",
     description: "Upload Pulumi ",
     policy: {
         Version: "2012-10-17",
-        Statement: pulumi.getStack() === "production" ? [
-            uploadPolicyReleaseContentBucketStatement,
-            uploadPolicyReleaseEcrAuthorizationTokenStatement,
-            uploadPolicyReleaseEcrUploadImageStatement,
-        ] : [
-            uploadPolicyReleaseContentBucketStatement,
-        ]
+        Statement: uploadReleasePolicyStatement,
     },
 });
 
