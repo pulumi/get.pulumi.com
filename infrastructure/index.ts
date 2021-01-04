@@ -19,7 +19,7 @@ const certificateArn = cfg.require("certificateArn");
 const contentBucket = new aws.s3.Bucket(`${fullDomain}-bucket`, {
     bucket: fullDomain,
     acl: "public-read",
-});
+}, { protect: true });
 
 // contentBucket needs to have the "public-read" ACL so its contents can be ready by CloudFront and
 // served. But we deny the s3:ListBucket permission to prevent unintended disclosure of the bucket's
@@ -110,27 +110,72 @@ const uploadReleaseRole = new aws.iam.Role("PulumiUploadRelease", {
 // ARN of the role we need to hook up to our CI bots to enable them to upload releases.
 export const uploadReleaseRoleArn = uploadReleaseRole.arn;
 
+const uploadPolicyReleaseContentBucketStatement: aws.iam.PolicyStatement = {
+    Effect: "Allow",
+    // Only allow uploading data. So `aws s3 cp` or `aws s3 ls` won't work.
+    Action: [
+        "s3:PutObject",
+        "s3:PutObjectAcl",
+    ],
+    // Only allow uploading objects with certain prefixes.
+    Resource: [
+        pulumi.interpolate`${contentBucket.arn}/releases/plugins/*`,
+        pulumi.interpolate`${contentBucket.arn}/releases/sdk/*`,
+    ],
+};
+
+const uploadPolicyReleaseEcrAuthorizationTokenStatement: aws.iam.PolicyStatement = {
+    Effect: "Allow",
+    Action: [
+        "ecr:GetAuthorizationToken",
+    ],
+    Resource: ["*"],
+};
+
+// For now, we've manually created the repos and won't manage them in this stack (there's no support in the provider).
+const productionImageRepositories = [
+    "pulumi",
+    "pulumi-dotnet",
+    "pulumi-go",
+    "pulumi-nodejs",
+    "pulumi-python",
+    "pulumi-kubernetes-operator",
+].map(repo => `arn:aws:ecr-public::058607598222:repository/${repo}`);
+
+// Allow uploading to the production release repositories
+const uploadPolicyReleaseEcrUploadImageStatement: aws.iam.PolicyStatement = {
+    Effect: "Allow",
+    Action: [
+        "ecr:BatchCheckLayerAvailability",
+        "ecr:GetDownloadUrlForLayer",
+        "ecr:GetRepositoryPolicy",
+        "ecr:DescribeRepositories",
+        "ecr:ListImages",
+        "ecr:DescribeImages",
+        "ecr:BatchGetImage",
+        "ecr:InitiateLayerUpload",
+        "ecr:UploadLayerPart",
+        "ecr:CompleteLayerUpload",
+        "ecr:PutImage",
+    ],
+    Resource: productionImageRepositories,
+};
+
+const uploadReleasePolicyStatement = pulumi.getStack() === "production" ? [
+    uploadPolicyReleaseContentBucketStatement,
+    uploadPolicyReleaseEcrAuthorizationTokenStatement,
+    uploadPolicyReleaseEcrUploadImageStatement,
+] : [
+    uploadPolicyReleaseContentBucketStatement,
+];
+
 // Permissions granted to those who assume the upload releases role.
 const uploadReleasePolicy = new aws.iam.Policy("PulumiUploadReleasePolicy", {
     name: "PulumiUploadReleasePolicy",
     description: "Upload Pulumi ",
     policy: {
         Version: "2012-10-17",
-        Statement: [
-            {
-                Effect: "Allow",
-                // Only allow uploading data. So `aws s3 cp` or `aws s3 ls` won't work.
-                Action: [
-                    "s3:PutObject",
-                    "s3:PutObjectAcl",
-                ],
-                // Only allow uploading objects with certain prefixes.
-                Resource: [
-                    pulumi.interpolate`${contentBucket.arn}/releases/plugins/*`,
-                    pulumi.interpolate`${contentBucket.arn}/releases/sdk/*`,
-                ],
-            },
-        ],
+        Statement: uploadReleasePolicyStatement,
     },
 });
 

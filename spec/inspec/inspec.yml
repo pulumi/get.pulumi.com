@@ -1,0 +1,8 @@
+name: pulumi
+title: InSpec Profile to verify Pulumi is correctly installed
+maintainer: Pulumi Team
+copyright: Pulumi Team
+copyright_email: team@pulumi.com
+license: Apache-2.0
+summary: Validates that Pulumi is correctly installed
+version: 0.1.0

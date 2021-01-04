@@ -55,7 +55,7 @@ try {
     $val = $envKey.GetValue("PATH", "", [Microsoft.Win32.RegistryValueOptions]::DoNotExpandEnvironmentNames);
     if ($val -notlike "*${binRoot};*") {
         $envKey.SetValue("PATH", "$binRoot;$val", [Microsoft.Win32.RegistryValueKind]::ExpandString);
-        Write-Host "Added $binRoot to the $PATH. Changes may not be visible until after a restart."
+        Write-Host "Added $binRoot to the `$PATH. Changes may not be visible until after a restart."
     }
     $envKey.Close();
 } catch {
