@@ -127,7 +127,7 @@ const uploadPolicyReleaseContentBucketStatement: aws.iam.PolicyStatement = {
 const uploadPolicyReleaseEcrAuthorizationTokenStatement: aws.iam.PolicyStatement = {
     Effect: "Allow",
     Action: [
-        "ecr-public:GetAuthorizationToken",
+        "ecr:GetAuthorizationToken",
     ],
     Resource: ["*"],
 };
@@ -146,15 +146,17 @@ const productionImageRepositories = [
 const uploadPolicyReleaseEcrUploadImageStatement: aws.iam.PolicyStatement = {
     Effect: "Allow",
     Action: [
-        "ecr-public:BatchCheckLayerAvailability",
-        "ecr-public:CompleteLayerUpload",
-        "ecr-public:DescribeImages",
-        "ecr-public:DescribeImageTags",
-        "ecr-public:DescribeRepositories",
-        "ecr-public:GetRepositoryPolicy",
-        "ecr-public:InitiateLayerUpload",
-        "ecr-public:UploadLayerPart",
-        "ecr-public:PutImage",
+        "ecr:BatchCheckLayerAvailability",
+        "ecr:GetDownloadUrlForLayer",
+        "ecr:GetRepositoryPolicy",
+        "ecr:DescribeRepositories",
+        "ecr:ListImages",
+        "ecr:DescribeImages",
+        "ecr:BatchGetImage",
+        "ecr:InitiateLayerUpload",
+        "ecr:UploadLayerPart",
+        "ecr:CompleteLayerUpload",
+        "ecr:PutImage",
     ],
     Resource: productionImageRepositories,
 };
