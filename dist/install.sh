@@ -120,7 +120,10 @@ say_white "+ Downloading ${TARBALL_URL}..."
 
 TARBALL_DEST=$(mktemp -t pulumi.tar.gz.XXXXXXXXXX)
 
-if curl --fail "$(printf %s "${SILENT}")" -L -o "${TARBALL_DEST}" "${TARBALL_URL}"; then
+# shellcheck disable=SC2181
+# https://github.com/koalaman/shellcheck/wiki/SC2181
+# Disable to allow the `--silent` option to be omitted.
+if curl --fail $(printf %s "${SILENT}") -L -o "${TARBALL_DEST}" "${TARBALL_URL}"; then
     say_white "+ Extracting to $HOME/.pulumi/bin"
 
     # If `~/.pulumi/bin exists, clear it out
