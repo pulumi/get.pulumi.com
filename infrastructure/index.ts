@@ -128,6 +128,7 @@ const uploadPolicyReleaseEcrAuthorizationTokenStatement: aws.iam.PolicyStatement
     Effect: "Allow",
     Action: [
         "ecr-public:GetAuthorizationToken",
+        "sts:GetServiceBearerToken",
     ],
     Resource: ["*"],
 };
@@ -142,7 +143,7 @@ const productionImageRepositories = [
     "pulumi-kubernetes-operator",
 ].map(repo => `arn:aws:ecr-public::058607598222:repository/${repo}`);
 
-// Allow uploading to the production release repositories
+// Allow uploading to the production release repositories.
 const uploadPolicyReleaseEcrUploadImageStatement: aws.iam.PolicyStatement = {
     Effect: "Allow",
     Action: [
