@@ -1,8 +1,5 @@
-on:
-  pull_request:
-
 name: 'Trigger: Pull Request'
-
+on: pull_request
 jobs:
   shellcheck:
     name: Shellcheck
