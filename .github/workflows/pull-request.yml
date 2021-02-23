@@ -39,7 +39,7 @@ jobs:
       PULUMI_STACK_NAME: "pulumi/get-pulumi-com/staging"
       AWS_ROLE_TO_ASSUME: ${{ secrets.AWS_ROLE_TO_ASSUME_STAGING }}
     steps:
-    - if: github.ref == "refs/heads/production"
+    - if: github.ref == 'refs/heads/production'
       run: |
           echo "PULUMI_STACK_NAME=pulumi/get-pulumi-com/production" >> $GITHUB_ENV
           echo "AWS_ROLE_TO_ASSUME=${{ secrets.AWS_ROLE_TO_ASSUME_PRODUCTION }}" >> $GITHUB_ENV      
