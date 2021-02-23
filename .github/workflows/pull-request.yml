@@ -35,15 +35,14 @@ jobs:
   preview:
     name: Preview
     runs-on: ubuntu-latest
+    env:
+      PULUMI_STACK_NAME: "pulumi/get-pulumi-com/staging"
+      AWS_ROLE_TO_ASSUME: ${{ secrets.AWS_ROLE_TO_ASSUME_STAGING }}
     steps:
     - if: github.ref == "refs/heads/production"
-      env:
-          PULUMI_STACK_NAME: "pulumi/get-pulumi-com/production"
-          AWS_ROLE_TO_ASSUME: ${{ secrets.AWS_ROLE_TO_ASSUME_PRODUCTION }}
-    - if: github.ref == "refs/heads/master"
-      env:
-          PULUMI_STACK_NAME: "pulumi/get-pulumi-com/staging"
-          AWS_ROLE_TO_ASSUME: ${{ secrets.AWS_ROLE_TO_ASSUME_STAGING }}
+      run: |
+          echo "PULUMI_STACK_NAME=pulumi/get-pulumi-com/production" >> $GITHUB_ENV
+          echo "AWS_ROLE_TO_ASSUME=${{ secrets.AWS_ROLE_TO_ASSUME_PRODUCTION }}" >> $GITHUB_ENV      
     - uses: actions/checkout@v2
     - name: Configure AWS credentials
       uses: aws-actions/configure-aws-credentials@v1
