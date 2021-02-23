@@ -1,8 +1,8 @@
+name: Production
 on:
-  pull_request:
-
-name: 'Trigger: Pull Request'
-
+  push:
+    branches:
+      - production
 jobs:
   shellcheck:
     name: Shellcheck
@@ -35,18 +35,10 @@ jobs:
     - name: Run inspec
       run: |
         inspec exec spec/inspec/
-  preview:
-    name: Preview
+  deploy:
+    name: Deploy Production
     runs-on: ubuntu-latest
     steps:
-    - if: github.ref == "refs/heads/production"
-      env:
-          PULUMI_STACK_NAME: "pulumi/get-pulumi-com/production"
-          AWS_ROLE_TO_ASSUME: ${{ secrets.AWS_ROLE_TO_ASSUME_PRODUCTION }}
-    - if: github.ref == "refs/heads/master"
-      env:
-          PULUMI_STACK_NAME: "pulumi/get-pulumi-com/staging"
-          AWS_ROLE_TO_ASSUME: ${{ secrets.AWS_ROLE_TO_ASSUME_STAGING }}
     - uses: actions/checkout@v2
     - name: Configure AWS credentials
       uses: aws-actions/configure-aws-credentials@v1
@@ -54,13 +46,13 @@ jobs:
         aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         aws-region: us-west-2
-        role-to-assume: ${{ env.AWS_ROLE_TO_ASSUME }}
-        role-external-id: ${{ env.PULUMI_STACK_NAME }}
+        role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME_STAGING }}
+        role-external-id: "pulumi/get-pulumi-com/production"
         role-duration-seconds: 3600
         role-session-name: get.pulumi.com-${{ github.run_id }}
     - uses: pulumi/actions@v1
       with:
-        command: preview
+        command: up
       env:
           PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
-          IS_PR_WORKFLOW: true
+          PULUMI_STACK_NAME: "pulumi/get-pulumi-com/production"
