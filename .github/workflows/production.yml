@@ -46,7 +46,7 @@ jobs:
         aws-access-key-id: ${{ secrets.CI_AWS_ACCESS_KEY_ID }}
         aws-secret-access-key: ${{ secrets.CI_AWS_SECRET_ACCESS_KEY }}
         aws-region: us-west-2
-        role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME_STAGING }}
+        role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME_PRODUCTION }}
         role-external-id: "pulumi/get-pulumi-com/production"
         role-duration-seconds: 3600
     - uses: pulumi/actions@v1

@@ -56,4 +56,4 @@ jobs:
         command: up
       env:
           PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
-          PULUMI_STACK_NAME: "pulumi/get-pulumi-com/production"
+          PULUMI_STACK_NAME: "pulumi/get-pulumi-com/staging"
