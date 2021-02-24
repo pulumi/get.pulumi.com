@@ -49,7 +49,6 @@ jobs:
         role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME_STAGING }}
         role-external-id: "pulumi/get-pulumi-com/production"
         role-duration-seconds: 3600
-        role-session-name: get.pulumi.com-${{ github.run_id }}
     - uses: pulumi/actions@v1
       with:
         command: up

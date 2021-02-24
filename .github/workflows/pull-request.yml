@@ -53,7 +53,6 @@ jobs:
         role-to-assume: ${{ env.AWS_ROLE_TO_ASSUME }}
         role-external-id: ${{ env.PULUMI_STACK_NAME }}
         role-duration-seconds: 3600
-        role-session-name: get.pulumi.com-${{ github.run_id }}
     - uses: pulumi/actions@v1
       with:
         command: preview
