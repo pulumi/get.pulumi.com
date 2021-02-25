@@ -35,6 +35,9 @@ jobs:
   preview:
     name: Preview
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: infrastructure
     env:
       PULUMI_STACK_NAME: "pulumi/get-pulumi-com/staging"
       AWS_ROLE_TO_ASSUME: ${{ secrets.AWS_ROLE_TO_ASSUME_STAGING }}
@@ -57,7 +60,6 @@ jobs:
     - uses: pulumi/actions@v1
       with:
         command: preview
-        work-dir: infrastructure
       env:
           PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
           IS_PR_WORKFLOW: true

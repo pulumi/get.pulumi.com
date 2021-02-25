@@ -38,6 +38,9 @@ jobs:
   deploy:
     name: Deploy Production
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: infrastructure
     steps:
     - uses: actions/checkout@v2
     - name: Configure AWS credentials
@@ -53,7 +56,6 @@ jobs:
     - uses: pulumi/actions@v1
       with:
         command: up
-        work-dir: infrastructure
       env:
           PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
           PULUMI_STACK_NAME: "pulumi/get-pulumi-com/production"
