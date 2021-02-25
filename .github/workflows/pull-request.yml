@@ -60,7 +60,7 @@ jobs:
     - uses: pulumi/actions@v1
       with:
         command: preview
-        args: -C infrastructure
       env:
+          PULUMI_ROOT: infrastructure
           PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
           IS_PR_WORKFLOW: true
