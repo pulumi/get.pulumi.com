@@ -56,6 +56,7 @@ jobs:
     - uses: pulumi/actions@v1
       with:
         command: up
+        args: -C infrastructure
       env:
           PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
           PULUMI_STACK_NAME: "pulumi/get-pulumi-com/production"
