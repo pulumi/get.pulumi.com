@@ -103,12 +103,17 @@ case $(uname) in
         ;;
 esac
 
-if [ "$(uname -m)" != "x86_64" ]; then
+ARCH=""
+case $(uname -m) in
+    "x86_64") ARCH="x64";;
+    "arm64") ARCH="arm64";;
+    *)
         print_unsupported_platform
         exit 1
-fi
+        ;;
+esac
 
-TARBALL_URL="https://get.pulumi.com/releases/sdk/pulumi-v${VERSION}-${OS}-x64.tar.gz"
+TARBALL_URL="https://get.pulumi.com/releases/sdk/pulumi-v${VERSION}-${OS}-${ARCH}.tar.gz"
 
 if ! command -v pulumi >/dev/null; then
     say_blue "=== Installing Pulumi v${VERSION} ==="
