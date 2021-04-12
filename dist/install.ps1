@@ -1,3 +1,7 @@
+param(
+    [string]$Version
+)
+
 Set-StrictMode -Version Latest
 $ErrorActionPreference="Stop"
 $ProgressPreference="SilentlyContinue"
@@ -5,24 +9,27 @@ $ProgressPreference="SilentlyContinue"
 # Some versions of PowerShell do not support Tls1.2 out of the box, but pulumi.com requires it
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 
-# Query pulumi.com/latest-version for the most recent release. Because this approach
-# is now used by third parties as well (e.g., GitHub Actions virtual environments),
-# changes to this API should be made with care to avoid breaking any services that
-# rely on it (and ideally be accompanied by PRs to update them accordingly). Known
-# consumers of this API include:
-#
-# * https://github.com/actions/virtual-environments
-#
-$latestVersion = (Invoke-WebRequest -UseBasicParsing https://www.pulumi.com/latest-version).Content.Trim()
+if ($Version -eq $null -or $Version -eq "") {
+    # Query pulumi.com/latest-version for the most recent release. Because this approach
+    # is now used by third parties as well (e.g., GitHub Actions virtual environments),
+    # changes to this API should be made with care to avoid breaking any services that
+    # rely on it (and ideally be accompanied by PRs to update them accordingly). Known
+    # consumers of this API include:
+    #
+    # * https://github.com/actions/virtual-environments
+    #
+    $latestVersion = (Invoke-WebRequest -UseBasicParsing https://www.pulumi.com/latest-version).Content.Trim()
+    $Version = $latestVersion
+}
 
-$downloadUrl = "https://get.pulumi.com/releases/sdk/pulumi-v${latestVersion}-windows-x64.zip"
+$downloadUrl = "https://get.pulumi.com/releases/sdk/pulumi-v${Version}-windows-x64.zip"
 
 Write-Host "Downloading $downloadUrl"
 
 # Download to a temp file, Expand-Archive requires that the extention of the file be "zip", so we do a bit of work here
 # to generate the filename.
 $tempZip = New-Item -Type File (Join-Path $env:TEMP ([System.IO.Path]::ChangeExtension(([System.IO.Path]::GetRandomFileName()), "zip")))
-Invoke-WebRequest https://get.pulumi.com/releases/sdk/pulumi-v${latestVersion}-windows-x64.zip -OutFile $tempZip
+Invoke-WebRequest $downloadUrl -OutFile $tempZip
 
 # Extract the zip we've downloaded. It contains a single root folder named "Pulumi" with a sub-directory named "bin"
 $tempDir = New-Item -Type Directory (Join-Path $env:TEMP ([System.IO.Path]::GetRandomFileName()))
