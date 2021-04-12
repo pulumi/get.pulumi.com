@@ -107,6 +107,7 @@ ARCH=""
 case $(uname -m) in
     "x86_64") ARCH="x64";;
     "arm64") ARCH="arm64";;
+    "aarch64") ARCH="arm64";;
     *)
         print_unsupported_platform
         exit 1
