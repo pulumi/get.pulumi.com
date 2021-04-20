@@ -42,6 +42,8 @@ jobs:
       run:
         working-directory: infrastructure
     steps:
+    - name: Install Pulumi CLI
+      uses: pulumi/action-install-pulumi-cli@v1
     - uses: actions/checkout@v2
       with:
         fetch-depth: 1
@@ -57,7 +59,7 @@ jobs:
         role-session-name: get.pulumi.com-${{ github.run_id }}
     - run: npm install
       working-directory: infrastructure
-    - uses: pulumi/actions@v2
+    - uses: pulumi/actions@v3
       with:
         command: up
         stack-name: "pulumi/get-pulumi-com/staging"
