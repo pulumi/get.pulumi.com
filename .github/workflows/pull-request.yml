@@ -41,6 +41,8 @@ jobs:
     env:
       AWS_ROLE_TO_ASSUME: ${{ secrets.AWS_ROLE_TO_ASSUME_STAGING }}
     steps:
+    - name: Install Pulumi CLI
+      uses: pulumi/action-install-pulumi-cli@v1
     - if: github.ref == 'refs/heads/production'
       run: |
           echo "AWS_ROLE_TO_ASSUME=${{ secrets.AWS_ROLE_TO_ASSUME_PRODUCTION }}" >> $GITHUB_ENV      
@@ -58,7 +60,7 @@ jobs:
     - run: npm install
       working-directory: infrastructure
     - if: github.ref == 'refs/heads/production'
-      uses: pulumi/actions@v2
+      uses: pulumi/actions@v3
       with:
         command: preview
         work-dir: infrastructure
@@ -66,7 +68,7 @@ jobs:
       env:
           PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
     - if: github.ref != 'refs/heads/production'
-      uses: pulumi/actions@v2
+      uses: pulumi/actions@v3
       with:
         command: preview
         work-dir: infrastructure
