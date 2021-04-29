@@ -45,7 +45,7 @@ jobs:
       uses: pulumi/action-install-pulumi-cli@v1
     - if: github.ref == 'refs/heads/production'
       run: |
-          echo "AWS_ROLE_TO_ASSUME=${{ secrets.AWS_ROLE_TO_ASSUME_PRODUCTION }}" >> $GITHUB_ENV      
+          echo "AWS_ROLE_TO_ASSUME=${{ secrets.AWS_ROLE_TO_ASSUME_PRODUCTION }}" >> $GITHUB_ENV
     - uses: actions/checkout@v2
     - name: Configure AWS credentials
       uses: aws-actions/configure-aws-credentials@v1
@@ -57,7 +57,7 @@ jobs:
         role-external-id: ${{ env.PULUMI_STACK_NAME }}
         role-duration-seconds: 3600
         role-session-name: get.pulumi.com-${{ github.run_id }}
-    - run: npm install
+    - run: yarn install
       working-directory: infrastructure
     - if: github.ref == 'refs/heads/production'
       uses: pulumi/actions@v3
