@@ -57,7 +57,7 @@ jobs:
         role-external-id: "pulumi/get-pulumi-com/staging"
         role-duration-seconds: 3600
         role-session-name: get.pulumi.com-${{ github.run_id }}
-    - run: npm install
+    - run: yarn install
       working-directory: infrastructure
     - uses: pulumi/actions@v3
       with:
