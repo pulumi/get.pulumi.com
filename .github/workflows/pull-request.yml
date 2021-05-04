@@ -35,17 +35,14 @@ jobs:
   preview:
     name: Preview
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: infrastructure
     env:
-      PULUMI_STACK_NAME: "pulumi/get-pulumi-com/staging"
       AWS_ROLE_TO_ASSUME: ${{ secrets.AWS_ROLE_TO_ASSUME_STAGING }}
     steps:
-    - if: github.ref == 'refs/heads/production'
+    - name: Install Pulumi CLI
+      uses: pulumi/action-install-pulumi-cli@v1
+    - if: github.base_ref == 'production'
       run: |
-          echo "PULUMI_STACK_NAME=pulumi/get-pulumi-com/production" >> $GITHUB_ENV
-          echo "AWS_ROLE_TO_ASSUME=${{ secrets.AWS_ROLE_TO_ASSUME_PRODUCTION }}" >> $GITHUB_ENV      
+          echo "AWS_ROLE_TO_ASSUME=${{ secrets.AWS_ROLE_TO_ASSUME_PRODUCTION }}" >> $GITHUB_ENV
     - uses: actions/checkout@v2
     - name: Configure AWS credentials
       uses: aws-actions/configure-aws-credentials@v1
@@ -57,10 +54,21 @@ jobs:
         role-external-id: ${{ env.PULUMI_STACK_NAME }}
         role-duration-seconds: 3600
         role-session-name: get.pulumi.com-${{ github.run_id }}
-    - uses: pulumi/actions@v1
+    - run: yarn install
+      working-directory: infrastructure
+    - if: github.base_ref == 'production'
+      uses: pulumi/actions@v3
       with:
         command: preview
+        work-dir: infrastructure
+        stack-name: "pulumi/get-pulumi-com/production"
       env:
-          PULUMI_ROOT: infrastructure
           PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
-          IS_PR_WORKFLOW: true
+    - if: github.base_ref == 'master'
+      uses: pulumi/actions@v3
+      with:
+        command: preview
+        work-dir: infrastructure
+        stack-name: "pulumi/get-pulumi-com/staging"
+      env:
+        PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}

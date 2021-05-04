@@ -42,6 +42,8 @@ jobs:
       run:
         working-directory: infrastructure
     steps:
+    - name: Install Pulumi CLI
+      uses: pulumi/action-install-pulumi-cli@v1
     - uses: actions/checkout@v2
       with:
         fetch-depth: 1
@@ -55,10 +57,12 @@ jobs:
         role-external-id: "pulumi/get-pulumi-com/staging"
         role-duration-seconds: 3600
         role-session-name: get.pulumi.com-${{ github.run_id }}
-    - uses: pulumi/actions@v1
+    - run: yarn install
+      working-directory: infrastructure
+    - uses: pulumi/actions@v3
       with:
         command: up
+        stack-name: "pulumi/get-pulumi-com/staging"
+        work-dir: infrastructure
       env:
-          PULUMI_ROOT: infrastructure
           PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
-          PULUMI_STACK_NAME: "pulumi/get-pulumi-com/staging"
