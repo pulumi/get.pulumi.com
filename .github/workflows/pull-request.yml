@@ -35,15 +35,12 @@ jobs:
   preview:
     name: Preview
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: infrastructure
     env:
       AWS_ROLE_TO_ASSUME: ${{ secrets.AWS_ROLE_TO_ASSUME_STAGING }}
     steps:
     - name: Install Pulumi CLI
       uses: pulumi/action-install-pulumi-cli@v1
-    - if: github.ref == 'refs/heads/production'
+    - if: github.base_ref == 'production'
       run: |
           echo "AWS_ROLE_TO_ASSUME=${{ secrets.AWS_ROLE_TO_ASSUME_PRODUCTION }}" >> $GITHUB_ENV
     - uses: actions/checkout@v2
@@ -59,7 +56,7 @@ jobs:
         role-session-name: get.pulumi.com-${{ github.run_id }}
     - run: yarn install
       working-directory: infrastructure
-    - if: github.ref == 'refs/heads/production'
+    - if: github.base_ref == 'production'
       uses: pulumi/actions@v3
       with:
         command: preview
@@ -67,7 +64,7 @@ jobs:
         stack-name: "pulumi/get-pulumi-com/production"
       env:
           PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
-    - if: github.ref != 'refs/heads/production'
+    - if: github.base_ref == 'master'
       uses: pulumi/actions@v3
       with:
         command: preview
