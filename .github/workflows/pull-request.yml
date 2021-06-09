@@ -38,8 +38,6 @@ jobs:
     env:
       AWS_ROLE_TO_ASSUME: ${{ secrets.AWS_ROLE_TO_ASSUME_STAGING }}
     steps:
-    - name: Install Pulumi CLI
-      uses: pulumi/action-install-pulumi-cli@v1
     - if: github.base_ref == 'production'
       run: |
           echo "AWS_ROLE_TO_ASSUME=${{ secrets.AWS_ROLE_TO_ASSUME_PRODUCTION }}" >> $GITHUB_ENV

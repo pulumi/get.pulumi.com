@@ -6,8 +6,9 @@
         "typescript": "^3.5.3"
     },
     "dependencies": {
-        "@pulumi/aws": "^2.0.0",
-        "@pulumi/pulumi": "^2.0.0",
+        "@pulumi/aws": "^4.0.0",
+        "@pulumi/pulumi": "^3.0.0",
+        "hosted-git-info": "2.8.9",
         "mime": "^2.4.4"
     }
 }

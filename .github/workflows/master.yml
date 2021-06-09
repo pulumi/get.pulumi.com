@@ -42,8 +42,6 @@ jobs:
       run:
         working-directory: infrastructure
     steps:
-    - name: Install Pulumi CLI
-      uses: pulumi/action-install-pulumi-cli@v1
     - uses: actions/checkout@v2
       with:
         fetch-depth: 1
