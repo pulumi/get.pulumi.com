@@ -5,6 +5,7 @@ jobs:
     name: Shellcheck
     runs-on: ubuntu-latest
     steps:
+    - uses: actions/checkout@v2
     - name: Run ShellCheck
       uses: ludeeus/action-shellcheck@1.1.0
       with:
@@ -16,6 +17,7 @@ jobs:
         os: [ "ubuntu", "macos" ]
     runs-on: ${{matrix.os}}-latest
     steps:
+    - uses: actions/checkout@v2
     - name: Install chef
       uses: actionshub/chef-install@1.1.0
       with:
