@@ -10,7 +10,7 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - name: Run ShellCheck
-      uses: ludeeus/action-shellcheck@master
+      uses: ludeeus/action-shellcheck@1.1.0
       with:
         scandir: "./dist"
   install:
@@ -22,7 +22,7 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - name: Install chef
-      uses: actionshub/chef-install@master
+      uses: actionshub/chef-install@1.1.0
       with:
         channel: current
         project: inspec
@@ -42,8 +42,6 @@ jobs:
       run:
         working-directory: infrastructure
     steps:
-    - name: Install Pulumi CLI
-      uses: pulumi/action-install-pulumi-cli@v1
     - uses: actions/checkout@v2
       with:
         fetch-depth: 1
