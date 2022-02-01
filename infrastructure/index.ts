@@ -68,6 +68,8 @@ aws.getCallerIdentity().then((callerIdentity) => {
 const uploadReleaseRole = new aws.iam.Role("PulumiUploadRelease", {
     name: "PulumiUploadRelease",
     description: "Upload new releases of the Pulumi SDK to get.pulumi.com.",
+    // The max of 2 hours.
+    maxSessionDuration: 2 * 60 * 60,
     assumeRolePolicy: {
         Version: "2012-10-17",
         Statement: [
