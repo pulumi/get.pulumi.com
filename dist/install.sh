@@ -157,7 +157,7 @@ if curl --retry 3 --fail $(printf %s "${SILENT}") -L -o "${TARBALL_DEST}" "${TAR
     rm -rf "${EXTRACT_DIR}"
 else
     >&2 say_red "error: failed to download ${TARBALL_URL}"
-    >&2 say_red "       please check your internet and try again, if the problem persists then file an"
+    >&2 say_red "       check your internet and try again; if the problem persists, file an"
     >&2 say_red "       issue at https://github.com/pulumi/pulumi/issues/new/choose"
     exit 1
 fi
