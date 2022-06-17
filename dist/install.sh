@@ -86,7 +86,7 @@ if [ -z "${VERSION}" ]; then
     # * https://github.com/actions/virtual-environments
     #
 
-    if ! VERSION=$(curl --fail --silent -L "https://www.pulumi.com/latest-version"); then
+    if ! VERSION=$(curl --retry 3 --fail --silent -L "https://www.pulumi.com/latest-version"); then
         >&2 say_red "error: could not determine latest version of Pulumi, try passing --version X.Y.Z to"
         >&2 say_red "       install an explicit version"
         exit 1
@@ -129,7 +129,7 @@ TARBALL_DEST=$(mktemp -t pulumi.tar.gz.XXXXXXXXXX)
 # shellcheck disable=SC2046
 # https://github.com/koalaman/shellcheck/wiki/SC2046
 # Disable to allow the `--silent` option to be omitted.
-if curl --fail $(printf %s "${SILENT}") -L -o "${TARBALL_DEST}" "${TARBALL_URL}"; then
+if curl --retry 3 --fail $(printf %s "${SILENT}") -L -o "${TARBALL_DEST}" "${TARBALL_URL}"; then
     say_white "+ Extracting to $HOME/.pulumi/bin"
 
     # If `~/.pulumi/bin exists, clear it out
@@ -157,6 +157,8 @@ if curl --fail $(printf %s "${SILENT}") -L -o "${TARBALL_DEST}" "${TARBALL_URL}"
     rm -rf "${EXTRACT_DIR}"
 else
     >&2 say_red "error: failed to download ${TARBALL_URL}"
+    >&2 say_red "       check your internet and try again; if the problem persists, file an"
+    >&2 say_red "       issue at https://github.com/pulumi/pulumi/issues/new/choose"
     exit 1
 fi
 
