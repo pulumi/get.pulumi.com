@@ -54,7 +54,12 @@ if (Test-Path -Path $binRoot) {
 }
 
 New-Item $pulumiInstallRoot -ItemType Directory -Force | Out-Null
-Move-Item (Join-Path $tempDir (Join-Path "pulumi" "bin")) $pulumiInstallRoot
+if (Test-Path (Join-Path $tempDir (Join-Path "pulumi" "bin"))) {
+    Move-Item (Join-Path $tempDir (Join-Path "pulumi" "bin")) $pulumiInstallRoot
+} else {
+    Move-Item (Join-Path $tempDir "pulumi") $binRoot
+}
+
 
 # Attempt to add ourselves to the $PATH, but if we can't, don't fail the overall script.
 try {
