@@ -190,12 +190,31 @@ const logsBucket = new aws.s3.Bucket(`${fullDomain}-logs`, {
     acl: "log-delivery-write",
 });
 
+const buildDateHeaderName: string = 'build-date';
+const buildDateHeaderValue: string = new Date().valueOf().toString();
+
+const cfViewerRequestFunction = new aws.cloudfront.Function(
+    'cf-viewer-request',
+    {
+        runtime: 'cloudfront-js-1.0',
+        publish: true,
+        code: `function handler(event){
+var request = event.request;
+request.headers[${JSON.stringify(buildDateHeaderName)}] = {
+    value: ${JSON.stringify(buildDateHeaderValue)},
+};
+return request;
+}`,
+    },
+);
+
 const distributionArgs: aws.cloudfront.DistributionArgs = {
     aliases: [fullDomain],
     defaultCacheBehavior: {
         allowedMethods: ["GET", "HEAD"],
         cachedMethods: ["GET", "HEAD"],
         forwardedValues: {
+            headers: [buildDateHeaderName],
             cookies: {
                 forward: "none",
             },
@@ -211,6 +230,11 @@ const distributionArgs: aws.cloudfront.DistributionArgs = {
         maxTtl: 31536000,  // One year, the default.
 
         compress: true,
+
+        functionAssociations: [{
+            eventType: 'viewer-request',
+            functionArn: cfViewerRequestFunction.arn,
+        }],
 
         // Include a Lambda to rewrite origin requests including a '+' to using '%2B' since S3 interprets '+' incorrectly
         lambdaFunctionAssociations: [{
