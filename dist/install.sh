@@ -141,7 +141,7 @@ if curl --retry 3 --fail $(printf %s "${SILENT}") -L -o "${TARBALL_DEST}" "${TAR
 
     # Yarn's shell installer does a similar dance of extracting to a temp
     # folder and copying to not depend on additional tar flags
-    EXTRACT_DIR=$(mktemp -d pulumi.XXXXXXXXXX)
+    EXTRACT_DIR=$(mktemp -dt pulumi.XXXXXXXXXX)
     tar zxf "${TARBALL_DEST}" -C "${EXTRACT_DIR}"
 
     # Our tarballs used to have a top level bin folder, so support that older
