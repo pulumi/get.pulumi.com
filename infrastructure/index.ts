@@ -222,6 +222,9 @@ const distributionArgs: aws.cloudfront.DistributionArgs = {
         },
         targetOriginId: contentBucket.bucketDomainName.apply(d => `S3-${d}`),
         viewerProtocolPolicy: "redirect-to-https",
+        
+        // https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/using-managed-response-headers-policies.html#managed-response-headers-policies-security
+        responseHeadersPolicyId: "67f7725c-6f97-4210-82d7-5512b31e9d03", // SecurityHeadersPolicy from https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/using-managed-response-headers-policies.html
 
         // TTLs. These are used since presumably there aren't any cache control settings
         // for the individual S3 objects.
