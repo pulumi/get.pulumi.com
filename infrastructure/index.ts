@@ -144,6 +144,7 @@ const productionImageRepositories = [
     "pulumi-python",
     "pulumi-kubernetes-operator",
     "pulumi-base",
+    "pulumi-provider-build-environment",
 ].map(repo => `arn:aws:ecr-public::058607598222:repository/${repo}`);
 
 // Allow uploading to the production release repositories.
