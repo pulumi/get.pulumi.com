@@ -22,13 +22,13 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - name: Install chef
-      uses: actionshub/chef-install@1.1.0
+      uses: actionshub/chef-install@2.0.4
       with:
         channel: current
         project: inspec
     - name: accept chef license
       run: |
-        chef-inspect-ctl reconfigure --chef-license=accept-silent
+        chef-inspec-ctl reconfigure --chef-license=accept-silent
     - name: Run install script
       run: |
         ./dist/install.sh --silent
