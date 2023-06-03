@@ -48,7 +48,7 @@ jobs:
           else 
             echo "FAIL: $f"
             echo "  ls -al: $(ls -al $f)"
-            echo ::
+            echo 
             exit_code=1
           fi
         done
