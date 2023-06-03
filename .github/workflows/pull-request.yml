@@ -28,6 +28,7 @@ jobs:
         test -d ~/.pulumi/bin
         cd ~/.pulumi/bin
         exit_code=0
+        echo "Checking for expected files..."
         for f in \
           "pulumi" \
           "pulumi-analyzer-policy" \
@@ -46,8 +47,8 @@ jobs:
             echo "OK: $f"
           else 
             echo "FAIL: $f"
-            echo "  $f isn't nonzero, readable, or executable"
-            echo "  `ls -al "$f`: $(ls -al $f)"
+            echo "  $(ls -al $f)"
+            echo
             exit_code=1
           fi
         done
