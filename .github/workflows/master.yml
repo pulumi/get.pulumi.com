@@ -4,26 +4,11 @@ on:
     branches:
       - master
 jobs:
-  shellcheck:
-    name: Shellcheck
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v3
-    - name: Run ShellCheck
-      uses: ludeeus/action-shellcheck@2.0.0
-      with:
-        scandir: "./dist"
-  install:
-    name: Install & Test
-    strategy:
-      matrix:
-        os: [ "ubuntu", "macos" ]
-    runs-on: ${{matrix.os}}-latest
-    steps:
-    - uses: actions/checkout@v3
-    - name: Run install script
-      run: |
-        ./dist/install.sh --silent
+
+  tests:
+    name: Tests
+    uses: ./.github/workflows/tests.yml
+
   deploy:
     name: Deploy Staging
     runs-on: ubuntu-latest
