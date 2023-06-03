@@ -22,22 +22,31 @@ jobs:
     - name: Run install script
       run: |
         ./dist/install.sh --silent
-    - name: Check install script
+    - name: Check installed content
       run: |
         test -d ~/.pulumi
         test -d ~/.pulumi/bin
-        for f in
-          "pulumi"
-          "pulumi-analyzer-policy"
-          "pulumi-analyzer-policy-python"
-          "pulumi-language-dotnet"
-          "pulumi-language-go"
-          "pulumi-language-nodejs"
-          "pulumi-language-python"
-          "pulumi-resource-pulumi-nodejs"
-          "pulumi-resource-pulumi-python"; do
-          # Check each file is non-zero, is readable, and is executable
-          test -s ~/.pulumi/bin/$f -a -r ~/.pulumi/bin/$f -a -x ~/.pulumi/bin/$f
+        cd ~/.pulumi/bin
+        for f in \
+          "pulumi" \
+          "pulumi-analyzer-policy" \
+          "pulumi-analyzer-policy-python" \
+          "pulumi-language-dotnet" \
+          "pulumi-language-go" \
+          "pulumi-language-nodejs" \
+          "pulumi-language-python" \
+          "pulumi-language-python-exec" \
+          "pulumi-language-yaml" \
+          "pulumi-resource-pulumi-nodejs" \
+          "pulumi-resource-pulumi-python" \
+          "pulumi-watch"; do
+          # nonzero, readable, executable
+          if test -s "$f" -a -r "$f" -a -x "$f"; then
+            echo "OK: $f"
+          else 
+            echo "FAIL: $f"
+            ls -al "$f"
+            exit 1
         done
 
   preview:
