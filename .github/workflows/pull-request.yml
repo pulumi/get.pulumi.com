@@ -25,7 +25,7 @@ jobs:
         project: inspec
     - name: accept chef license
       run: |
-        inspec --chef-license=accept-silent
+        chef-inspect-ctl reconfigure --chef-license=accept-silent
     - name: Run install script
       run: |
         ./dist/install.sh --silent
