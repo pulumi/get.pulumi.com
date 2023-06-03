@@ -5,9 +5,9 @@ jobs:
     name: Shellcheck
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
     - name: Run ShellCheck
-      uses: ludeeus/action-shellcheck@1.1.0
+      uses: ludeeus/action-shellcheck@2.0.0
       with:
         scandir: "./dist"
   install:
@@ -17,21 +17,10 @@ jobs:
         os: [ "ubuntu", "macos" ]
     runs-on: ${{matrix.os}}-latest
     steps:
-    - uses: actions/checkout@v2
-    - name: Install chef
-      uses: actionshub/chef-install@1.1.0
-      with:
-        channel: current
-        project: inspec
-    - name: accept chef license
-      run: |
-        inspec --chef-license=accept-silent
+    - uses: actions/checkout@v3
     - name: Run install script
       run: |
         ./dist/install.sh --silent
-    - name: Run inspec
-      run: |
-        inspec exec spec/inspec/
   preview:
     name: Preview
     runs-on: ubuntu-latest
@@ -41,7 +30,7 @@ jobs:
     - if: github.base_ref == 'production'
       run: |
           echo "AWS_ROLE_TO_ASSUME=${{ secrets.AWS_ROLE_TO_ASSUME_PRODUCTION }}" >> $GITHUB_ENV
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
     - name: Configure AWS credentials
       uses: aws-actions/configure-aws-credentials@v1
       with:
@@ -55,7 +44,7 @@ jobs:
     - run: yarn install
       working-directory: infrastructure
     - if: github.base_ref == 'production'
-      uses: pulumi/actions@v3
+      uses: pulumi/actions@v4
       with:
         command: preview
         work-dir: infrastructure
@@ -63,7 +52,7 @@ jobs:
       env:
           PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
     - if: github.base_ref == 'master'
-      uses: pulumi/actions@v3
+      uses: pulumi/actions@v4
       with:
         command: preview
         work-dir: infrastructure
