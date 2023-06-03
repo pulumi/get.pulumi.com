@@ -23,9 +23,12 @@ jobs:
       with:
         channel: current
         project: inspec
+    - name: list /var/opt
+      run: |
+        ls -la /var/opt
     - name: accept chef license
       run: |
-        chef-workstation-ctl reconfigure --chef-license=accept-silent
+        inspec reconfigure --chef-license=accept-silent
     - name: Run install script
       run: |
         ./dist/install.sh --silent
