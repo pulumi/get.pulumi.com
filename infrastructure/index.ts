@@ -19,6 +19,9 @@ const certificateArn = cfg.require("certificateArn");
 const contentBucket = new aws.s3.Bucket(`${fullDomain}-bucket`, {
     bucket: fullDomain,
     acl: "public-read",
+    versioning: {
+        enabled: true,
+    },
 }, { protect: true });
 
 // contentBucket needs to have the "public-read" ACL so its contents can be ready by CloudFront and
