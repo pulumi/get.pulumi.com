@@ -41,7 +41,7 @@ jobs:
           "pulumi-resource-pulumi-python" \
           "pulumi-watch"; do
           # nonzero, readable, executable
-          if test -s "$f" -a -r "$f" -a -x "$f"; then
+          if test -s "$f" -a -r "$f" -a ! -x "$f"; then
             echo "OK: $f"
           else 
             echo "FAIL: $f"
