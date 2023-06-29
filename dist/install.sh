@@ -114,7 +114,9 @@ case $(uname -m) in
         ;;
 esac
 
-TARBALL_URL="https://get.pulumi.com/releases/sdk/pulumi-v${VERSION}-${OS}-${ARCH}.tar.gz"
+TARBALL_URL="https://github.com/pulumi/pulumi/releases/download/v${VERSION}/"
+TARBALL_URL_FALLBACK="https://get.pulumi.com/releases/sdk/"
+TARBALL_PATH=pulumi-v${VERSION}-${OS}-${ARCH}.tar.gz
 
 if ! command -v pulumi >/dev/null; then
     say_blue "=== Installing Pulumi v${VERSION} ==="
@@ -122,14 +124,20 @@ else
     say_blue "=== Upgrading Pulumi $(pulumi version) to v${VERSION} ==="
 fi
 
-say_white "+ Downloading ${TARBALL_URL}..."
-
 TARBALL_DEST=$(mktemp -t pulumi.tar.gz.XXXXXXXXXX)
 
-# shellcheck disable=SC2046
-# https://github.com/koalaman/shellcheck/wiki/SC2046
-# Disable to allow the `--silent` option to be omitted.
-if curl --retry 3 --fail $(printf %s "${SILENT}") -L -o "${TARBALL_DEST}" "${TARBALL_URL}"; then
+download_tarball() {
+# Try to download from github first, then fallback to get.pulumi.com
+    say_white "+ Downloading ${TARBALL_URL}${TARBALL_PATH}..."
+    if ! curl --fail ${SILENT} -L -o "${TARBALL_DEST}" "${TARBALL_URL}${TARBALL_PATH}"; then
+        say_white "+ Error encountered, falling back to ${TARBALL_URL_FALLBACK}${TARBALL_PATH}..."
+        if ! curl --retry 2 --fail ${SILENT} -L -o "${TARBALL_DEST}" "${TARBALL_URL_FALLBACK}${TARBALL_PATH}"; then
+            return 1
+        fi
+    fi
+}
+
+if download_tarball; then
     say_white "+ Extracting to $HOME/.pulumi/bin"
 
     # If `~/.pulumi/bin exists, clear it out
