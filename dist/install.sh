@@ -129,7 +129,11 @@ TARBALL_DEST=$(mktemp -t pulumi.tar.gz.XXXXXXXXXX)
 download_tarball() {
 # Try to download from github first, then fallback to get.pulumi.com
     say_white "+ Downloading ${TARBALL_URL}${TARBALL_PATH}..."
-    if ! curl --fail ${SILENT} -L -o "${TARBALL_DEST}" "${TARBALL_URL}${TARBALL_PATH}"; then
+    # This should opportunistically use the GITHUB_TOKEN to avoid rate limiting
+    # ...I think. It's hard to test accurately. But it at least doesn't seem tohurt.
+    if ! curl --fail ${SILENT} -L \
+        --header "Authorization: Bearer $GITHUB_TOKEN" \
+        -o "${TARBALL_DEST}" "${TARBALL_URL}${TARBALL_PATH}"; then
         say_white "+ Error encountered, falling back to ${TARBALL_URL_FALLBACK}${TARBALL_PATH}..."
         if ! curl --retry 2 --fail ${SILENT} -L -o "${TARBALL_DEST}" "${TARBALL_URL_FALLBACK}${TARBALL_PATH}"; then
             return 1
