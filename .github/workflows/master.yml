@@ -4,37 +4,11 @@ on:
     branches:
       - master
 jobs:
-  shellcheck:
-    name: Shellcheck
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v2
-    - name: Run ShellCheck
-      uses: ludeeus/action-shellcheck@1.1.0
-      with:
-        scandir: "./dist"
-  install:
-    name: Install & Test
-    strategy:
-      matrix:
-        os: [ "ubuntu", "macos" ]
-    runs-on: ${{matrix.os}}-latest
-    steps:
-    - uses: actions/checkout@v2
-    - name: Install chef
-      uses: actionshub/chef-install@1.1.0
-      with:
-        channel: current
-        project: inspec
-    - name: accept chef license
-      run: |
-        inspec --chef-license=accept-silent
-    - name: Run install script
-      run: |
-        ./dist/install.sh --silent
-    - name: Run inspec
-      run: |
-        inspec exec spec/inspec/
+
+  tests:
+    name: Tests
+    uses: ./.github/workflows/tests.yml
+
   deploy:
     name: Deploy Staging
     runs-on: ubuntu-latest
@@ -42,11 +16,11 @@ jobs:
       run:
         working-directory: infrastructure
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
       with:
         fetch-depth: 1
     - name: Configure AWS credentials
-      uses: aws-actions/configure-aws-credentials@v1
+      uses: aws-actions/configure-aws-credentials@v2
       with:
         aws-access-key-id: ${{ secrets.CI_AWS_ACCESS_KEY_ID }}
         aws-secret-access-key: ${{ secrets.CI_AWS_SECRET_ACCESS_KEY }}
@@ -57,7 +31,7 @@ jobs:
         role-session-name: get.pulumi.com-${{ github.run_id }}
     - run: yarn install
       working-directory: infrastructure
-    - uses: pulumi/actions@v3
+    - uses: pulumi/actions@v4
       with:
         command: up
         stack-name: "pulumi/get-pulumi-com/staging"
