@@ -57,6 +57,13 @@ aws.getCallerIdentity().then((callerIdentity) => {
                     Principal: "*",
                     Action: ["s3:GetObject"],
                     Resource: [`${arn}/releases/sdk/*`],
+                },
+                {
+                    Sid: "ESCPublicRead",
+                    Effect: "Allow",
+                    Principal: "*",
+                    Action: ["s3:GetObject"],
+                    Resource: [`${arn}/releases/esc/*`],
                 }
             ],
         })),
@@ -124,6 +131,7 @@ const uploadPolicyReleaseContentBucketStatement: aws.iam.PolicyStatement = {
     ],
     // Only allow uploading objects with certain prefixes.
     Resource: [
+        pulumi.interpolate`${contentBucket.arn}/releases/esc/*`,
         pulumi.interpolate`${contentBucket.arn}/releases/plugins/*`,
         pulumi.interpolate`${contentBucket.arn}/releases/sdk/*`,
     ],
@@ -140,6 +148,7 @@ const uploadPolicyReleaseEcrAuthorizationTokenStatement: aws.iam.PolicyStatement
 
 // For now, we've manually created the repos and won't manage them in this stack (there's no support in the provider).
 const productionImageRepositories = [
+    "esc",
     "pulumi",
     "pulumi-dotnet",
     "pulumi-go",
@@ -226,7 +235,7 @@ const distributionArgs: aws.cloudfront.DistributionArgs = {
         },
         targetOriginId: contentBucket.bucketDomainName.apply(d => `S3-${d}`),
         viewerProtocolPolicy: "redirect-to-https",
-        
+
         // https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/using-managed-response-headers-policies.html#managed-response-headers-policies-security
         responseHeadersPolicyId: "67f7725c-6f97-4210-82d7-5512b31e9d03", // SecurityHeadersPolicy from https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/using-managed-response-headers-policies.html
 
@@ -291,7 +300,7 @@ const record = new aws.route53.Record(`${fullDomain}-record`, {
     ],
 });
 
-// Upload all the files in ../dist. We force the Content-Type header to text/plain so it renders nicely in a web
+// Upload all the files in ../dist. We force the Content-Type header to text/plain, so it renders nicely in a web
 // browser when you view the page directly (for example, to inspect the script).
 const distRoot = path.join("..", "dist");
 
@@ -300,6 +309,23 @@ for (let entry of fs.readdirSync(distRoot)) {
     if (fs.statSync(entryPath).isFile()) {
         // tslint:disable-next-line
         new aws.s3.BucketObject(entry, {
+            bucket: contentBucket,
+            contentType: "text/plain",
+            source: new pulumi.asset.FileAsset(entryPath),
+            acl: "public-read",
+        });
+    }
+}
+
+// Upload all the files in ../dist/esc. We force the Content-Type header to text/plain, so it renders nicely in a web
+// browser when you view the page directly (for example, to inspect the script).
+const escRoot = path.join(distRoot, "esc");
+
+for (let entry of fs.readdirSync(escRoot)) {
+    const entryPath = path.join(escRoot, entry);
+    if (fs.statSync(entryPath).isFile()) {
+        // tslint:disable-next-line
+        new aws.s3.BucketObject(`esc-${entry}`, {
             bucket: contentBucket,
             contentType: "text/plain",
             source: new pulumi.asset.FileAsset(entryPath),
