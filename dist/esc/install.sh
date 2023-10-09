@@ -10,9 +10,9 @@ WHITE="\\033[37;1m"
 
 print_unsupported_platform()
 {
-    >&2 say_red "error: We're sorry, but it looks like Pulumi is not supported on your platform"
+    >&2 say_red "error: We're sorry, but it looks like Pulumi ESC is not supported on your platform"
     >&2 say_red "       We support 64-bit versions of Linux and macOS and are interested in supporting"
-    >&2 say_red "       more platforms.  Please open an issue at https://github.com/pulumi/pulumi and"
+    >&2 say_red "       more platforms.  Please open an issue at https://github.com/pulumi/esc and"
     >&2 say_red "       let us know what platform you're using!"
 }
 
@@ -76,6 +76,10 @@ while [ $# -gt 0 ]; do
 done
 
 if [ -z "${VERSION}" ]; then
+    # TODO: remove hardcoded version
+    VERSION=0.2.0
+
+    # TODO: add latest-version support for pulumi/esc
 
     # Query pulumi.com/latest-version for the most recent release. Because this approach
     # is now used by third parties as well (e.g., GitHub Actions virtual environments),
@@ -86,11 +90,11 @@ if [ -z "${VERSION}" ]; then
     # * https://github.com/actions/virtual-environments
     #
 
-    if ! VERSION=$(curl --retry 3 --fail --silent -L "https://www.pulumi.com/latest-version"); then
-        >&2 say_red "error: could not determine latest version of Pulumi, try passing --version X.Y.Z to"
-        >&2 say_red "       install an explicit version"
-        exit 1
-    fi
+#    if ! VERSION=$(curl --retry 3 --fail --silent -L "https://www.pulumi.com/latest-version"); then
+#        >&2 say_red "error: could not determine latest version of Pulumi ESC, try passing --version X.Y.Z to"
+#        >&2 say_red "       install an explicit version"
+#        exit 1
+#    fi
 fi
 
 OS=""
@@ -114,17 +118,17 @@ case $(uname -m) in
         ;;
 esac
 
-TARBALL_URL="https://github.com/pulumi/pulumi/releases/download/v${VERSION}/"
-TARBALL_URL_FALLBACK="https://get.pulumi.com/releases/sdk/"
-TARBALL_PATH=pulumi-v${VERSION}-${OS}-${ARCH}.tar.gz
+TARBALL_URL="https://github.com/pulumi/esc/releases/download/v${VERSION}/"
+TARBALL_URL_FALLBACK="https://get.pulumi.com/esc/releases/"
+TARBALL_PATH=esc-v${VERSION}-${OS}-${ARCH}.tar.gz
 
-if ! command -v pulumi >/dev/null; then
-    say_blue "=== Installing Pulumi v${VERSION} ==="
+if ! command -v esc >/dev/null; then
+    say_blue "=== Installing Pulumi ESC v${VERSION} ==="
 else
-    say_blue "=== Upgrading Pulumi $(pulumi version) to v${VERSION} ==="
+    say_blue "=== Upgrading Pulumi ESC $(esc version) to v${VERSION} ==="
 fi
 
-TARBALL_DEST=$(mktemp -t pulumi.tar.gz.XXXXXXXXXX)
+TARBALL_DEST=$(mktemp -t esc.tar.gz.XXXXXXXXXX)
 
 download_tarball() {
     # Try to download from github first, then fallback to get.pulumi.com
@@ -144,39 +148,32 @@ download_tarball() {
 if download_tarball; then
     say_white "+ Extracting to $HOME/.pulumi/bin"
 
-    # If `~/.pulumi/bin` exists, remove previous files with a pulumi prefix
-    if [ -e "${HOME}/.pulumi/bin/pulumi" ]; then
-        rm "${HOME}/.pulumi/bin"/pulumi*
+    # If `~/.pulumi/bin/esc exists`, remove it
+    if [ -e "${HOME}/.pulumi/bin/esc" ]; then
+        rm -rf "${HOME}/.pulumi/bin/esc"
     fi
 
     mkdir -p "${HOME}/.pulumi"
 
     # Yarn's shell installer does a similar dance of extracting to a temp
     # folder and copying to not depend on additional tar flags
-    EXTRACT_DIR=$(mktemp -dt pulumi.XXXXXXXXXX)
+    EXTRACT_DIR=$(mktemp -dt esc.XXXXXXXXXX)
     tar zxf "${TARBALL_DEST}" -C "${EXTRACT_DIR}"
 
-    # Our tarballs used to have a top level bin folder, so support that older
-    # format if we detect it. Newer tarballs just have all the binaries in
-    # the top level Pulumi folder.
-    if [ -d "${EXTRACT_DIR}/pulumi/bin" ]; then
-        mv "${EXTRACT_DIR}/pulumi/bin" "${HOME}/.pulumi/"
-    else
-        cp -r "${EXTRACT_DIR}/pulumi/." "${HOME}/.pulumi/bin/"
-    fi
+    cp "${EXTRACT_DIR}/esc" "${HOME}/.pulumi/bin/"
 
     rm -f "${TARBALL_DEST}"
     rm -rf "${EXTRACT_DIR}"
 else
     >&2 say_red "error: failed to download ${TARBALL_URL}"
     >&2 say_red "       check your internet and try again; if the problem persists, file an"
-    >&2 say_red "       issue at https://github.com/pulumi/pulumi/issues/new/choose"
+    >&2 say_red "       issue at https://github.com/pulumi/esc/issues/new/choose"
     exit 1
 fi
 
-# Now that we have installed Pulumi, if it is not already on the path, let's add a line to the
+# Now that we have installed Pulumi ESC, if it is not already on the path, let's add a line to the
 # user's profile to add the folder to the PATH for future sessions.
-if ! command -v pulumi >/dev/null; then
+if ! command -v esc >/dev/null; then
     # If we can, we'll add a line to the user's .profile adding $HOME/.pulumi/bin to the PATH
     SHELL_NAME=$(basename "${SHELL}")
     PROFILE_FILE=""
@@ -209,25 +206,25 @@ if ! command -v pulumi >/dev/null; then
 
     if [ -n "${PROFILE_FILE}" ]; then
         LINE_TO_ADD="export PATH=\$PATH:\$HOME/.pulumi/bin"
-        if ! grep -q "# add Pulumi to the PATH" "${PROFILE_FILE}"; then
+        if ! grep -q "# add Pulumi ESC to the PATH" "${PROFILE_FILE}"; then
             say_white "+ Adding \$HOME/.pulumi/bin to \$PATH in ${PROFILE_FILE}"
-            printf "\\n# add Pulumi to the PATH\\n%s\\n" "${LINE_TO_ADD}" >> "${PROFILE_FILE}"
+            printf "\\n# add Pulumi ESC to the PATH\\n%s\\n" "${LINE_TO_ADD}" >> "${PROFILE_FILE}"
         fi
 
         EXTRA_INSTALL_STEP="+ Please restart your shell or add $HOME/.pulumi/bin to your \$PATH"
     else
         EXTRA_INSTALL_STEP="+ Please add $HOME/.pulumi/bin to your \$PATH"
     fi
-elif [ "$(command -v pulumi)" != "$HOME/.pulumi/bin/pulumi" ]; then
+elif [ "$(command -v esc)" != "$HOME/.pulumi/bin/esc" ]; then
     say_yellow
-    say_yellow "warning: Pulumi has been installed to $HOME/.pulumi/bin, but it looks like there's a different copy"
-    say_yellow "         on your \$PATH at $(dirname "$(command -v pulumi)"). You'll need to explicitly invoke the"
+    say_yellow "warning: Pulumi ESC has been installed to $HOME/.pulumi/bin, but it looks like there's a different copy"
+    say_yellow "         on your \$PATH at $(dirname "$(command -v esc)"). You'll need to explicitly invoke the"
     say_yellow "         version you just installed or modify your \$PATH to prefer this location."
 fi
 
 say_blue
-say_blue "=== Pulumi is now installed! 🍹 ==="
+say_blue "=== Pulumi ESC is now installed! 🍹 ==="
 if [ "$EXTRA_INSTALL_STEP" != "" ]; then
     say_white "${EXTRA_INSTALL_STEP}"
 fi
-say_green "+ Get started with Pulumi: https://www.pulumi.com/docs/quickstart"
+say_green "+ Get started with Pulumi ESC: https://www.pulumi.com/docs/pulumi-cloud/esc/get-started"

@@ -10,6 +10,10 @@ $ProgressPreference="SilentlyContinue"
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 
 if ($Version -eq $null -or $Version -eq "") {
+    # TODO: removed hardcoded version
+    $latestVersion="0.2.0"
+
+    # TODO: add latest-version support for pulumi/esc
     # Query pulumi.com/latest-version for the most recent release. Because this approach
     # is now used by third parties as well (e.g., GitHub Actions virtual environments),
     # changes to this API should be made with care to avoid breaking any services that
@@ -18,11 +22,11 @@ if ($Version -eq $null -or $Version -eq "") {
     #
     # * https://github.com/actions/virtual-environments
     #
-    $latestVersion = (Invoke-WebRequest -UseBasicParsing https://www.pulumi.com/latest-version).Content.Trim()
+#    $latestVersion = (Invoke-WebRequest -UseBasicParsing https://www.pulumi.com/latest-version).Content.Trim()
     $Version = $latestVersion
 }
 
-$downloadUrl = "https://get.pulumi.com/releases/sdk/pulumi-v${Version}-windows-x64.zip"
+$downloadUrl = "https://get.pulumi.com/esc/releases/esc-v${Version}-windows-x64.zip"
 
 Write-Host "Downloading $downloadUrl"
 
@@ -45,14 +49,13 @@ if ($PSVersionTable.PSVersion.Major -ge 5) {
 # Install into %USERPROFILE%\.pulumi\bin
 $pulumiInstallRoot = (Join-Path $env:UserProfile ".pulumi")
 $binRoot = (Join-Path $pulumiInstallRoot "bin")
+$escPath = (Join-Path $binRoot "esc")
 
-Write-Host "Copying Pulumi to $binRoot"
+Write-Host "Copying Pulumi ESC to $binRoot"
 
-# If we have a previous install, remove files with a pulumi prefix
-if (Test-Path -Path (Join-Path $binRoot "pulumi")) {
-    Get-ChildItem -Path $binRoot -File | Where-Object { $_.Name -like "pulumi*" } | ForEach-Object {
-        Remove-Item $_.FullName -Force
-    }
+# If we have a previous install, delete it.
+if (Test-Path -Path $escPath) {
+    Remove-Item -Path $escPath -Force
 }
 
 # Create the %USERPROFILE%\.pulumi\bin directory if it doesn't exist
@@ -60,17 +63,8 @@ if (-not (Test-Path -Path $binRoot -PathType Container)) {
     New-Item -Path $binRoot -ItemType Directory
 }
 
-# Our tarballs used to have a top level bin folder, so support that older
-# format if we detect it. Newer tarballs just have all the binaries in
-# the top level Pulumi folder.
-if (Test-Path (Join-Path $tempDir (Join-Path "pulumi" "bin"))) {
-    Get-ChildItem -Path (Join-Path $tempDir (Join-Path "pulumi" "bin")) -File | ForEach-Object {
-        $destinationPath = Join-Path -Path $binRoot -ChildPath $_.Name
-        Move-Item -Path $_.FullName -Destination $destinationPath -Force
-    }
-} else {
-    Move-Item (Join-Path $tempDir (Join-Path "pulumi" "bin")) $binRoot
-}
+# Copy the esc binary to %USERPROFILE%\.pulumi\bin
+Move-Item -Path (Join-Path $tempDir "esc") -Destination $escPath -Force
 
 
 # Attempt to add ourselves to the $PATH, but if we can't, don't fail the overall script.
@@ -93,8 +87,8 @@ if ($env:PATH -notlike "*$binRoot*") {
 Remove-Item -Force $tempZip
 Remove-Item -Recurse -Force $tempDir
 
-Write-Host "Pulumi is now installed!"
+Write-Host "Pulumi ESC is now installed!"
 Write-Host ""
 Write-Host "Ensure that $binRoot is on your `$PATH to use it."
 Write-Host ""
-Write-Host "Get started with Pulumi: https://www.pulumi.com/docs/quickstart"
+Write-Host "Get started with Pulumi ESC: https://www.pulumi.com/docs/pulumi-cloud/esc/get-started"
