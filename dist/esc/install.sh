@@ -151,7 +151,7 @@ if download_tarball; then
     EXTRACT_DIR=$(mktemp -dt esc.XXXXXXXXXX)
     tar zxf "${TARBALL_DEST}" -C "${EXTRACT_DIR}"
 
-    cp -r "${EXTRACT_DIR}/esc" "${HOME}/.pulumi/bin/"
+    cp "${EXTRACT_DIR}/esc/esc" "${HOME}/.pulumi/bin/"
 
     rm -f "${TARBALL_DEST}"
     rm -rf "${EXTRACT_DIR}"
