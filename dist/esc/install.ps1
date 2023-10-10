@@ -11,7 +11,7 @@ $ProgressPreference="SilentlyContinue"
 
 if ($Version -eq $null -or $Version -eq "") {
     # TODO: removed hardcoded version
-    $latestVersion="0.5.0"
+    $latestVersion="0.5.1"
 
     # TODO: add latest-version support for pulumi/esc
     # Query pulumi.com/latest-version for the most recent release. Because this approach
