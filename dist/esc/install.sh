@@ -153,7 +153,7 @@ if download_tarball; then
         rm -rf "${HOME}/.pulumi/bin/esc"
     fi
 
-    mkdir -p "${HOME}/.pulumi"
+    mkdir -p "${HOME}/.pulumi/bin"
 
     # Yarn's shell installer does a similar dance of extracting to a temp
     # folder and copying to not depend on additional tar flags
