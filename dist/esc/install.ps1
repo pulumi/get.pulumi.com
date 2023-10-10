@@ -64,7 +64,7 @@ if (-not (Test-Path -Path $binRoot -PathType Container)) {
 }
 
 # Copy the esc binary to %USERPROFILE%\.pulumi\bin
-Move-Item -Path (Join-Path $tempDir "esc") -Destination $escPath -Force
+Move-Item -Path (Join-Path $tempDir "esc\bin\esc.exe") -Destination $binRoot -Force
 
 
 # Attempt to add ourselves to the $PATH, but if we can't, don't fail the overall script.
