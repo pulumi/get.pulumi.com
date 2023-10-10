@@ -77,7 +77,7 @@ done
 
 if [ -z "${VERSION}" ]; then
     # TODO: remove hardcoded version
-    VERSION=0.4.5
+    VERSION=0.5.0
 
     # TODO: add latest-version support for pulumi/esc
 
