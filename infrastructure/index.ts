@@ -63,7 +63,7 @@ aws.getCallerIdentity().then((callerIdentity) => {
                     Effect: "Allow",
                     Principal: "*",
                     Action: ["s3:GetObject"],
-                    Resource: [`${arn}/releases/esc/*`],
+                    Resource: [`${arn}/esc/releases/*`],
                 }
             ],
         })),
@@ -131,7 +131,7 @@ const uploadPolicyReleaseContentBucketStatement: aws.iam.PolicyStatement = {
     ],
     // Only allow uploading objects with certain prefixes.
     Resource: [
-        pulumi.interpolate`${contentBucket.arn}/releases/esc/*`,
+        pulumi.interpolate`${contentBucket.arn}/esc/releases/*`,
         pulumi.interpolate`${contentBucket.arn}/releases/plugins/*`,
         pulumi.interpolate`${contentBucket.arn}/releases/sdk/*`,
     ],
@@ -325,7 +325,7 @@ for (let entry of fs.readdirSync(escRoot)) {
     const entryPath = path.join(escRoot, entry);
     if (fs.statSync(entryPath).isFile()) {
         // tslint:disable-next-line
-        new aws.s3.BucketObject(`esc-${entry}`, {
+        new aws.s3.BucketObject(`esc/${entry}`, {
             bucket: contentBucket,
             contentType: "text/plain",
             source: new pulumi.asset.FileAsset(entryPath),
