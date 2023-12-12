@@ -75,6 +75,14 @@ while [ $# -gt 0 ]; do
      shift
 done
 
+if [ "${VERSION}" = "dev" ]; then
+    if ! VERSION=$(curl --retry 3 --fail --silent -L "https://www.pulumi.com/latest-dev-version"); then
+        >&2 say_red "error: could not determine latest dev version of Pulumi, try passing --version X.Y.Z to"
+        >&2 say_red "       install an explicit version, or no argument to get the latest release version"
+        exit 1
+    fi
+fi
+
 if [ -z "${VERSION}" ]; then
 
     # Query pulumi.com/latest-version for the most recent release. Because this approach
