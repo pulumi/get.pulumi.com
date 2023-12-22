@@ -1,7 +1,7 @@
 param(
     [string]$Version,
     [string]$InstallRoot=$null,
-    [bool]$NoEditPath=$false
+    [switch]$NoEditPath,
 )
 
 Set-StrictMode -Version Latest
