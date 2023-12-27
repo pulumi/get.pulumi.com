@@ -133,7 +133,10 @@ if [ "$PULUMI_INSTALL_ROOT" = "" ]; then
 fi
 PULUMI_CLI="${PULUMI_INSTALL_ROOT}/bin/pulumi"
 
-if [ ! -e "${PULUMI_CLI}" ]; then
+if [ -d "${PULUMI_CLI}" ]; then
+    say_red "error: ${PULUMI_CLI} already exists and is a directory, refusing to proceed."
+    exit 1
+elif [ ! -f "${PULUMI_CLI}" ]; then
     say_blue "=== Installing Pulumi v${VERSION} ==="
 else
     say_blue "=== Upgrading Pulumi $(${PULUMI_CLI} version) to v${VERSION} ==="
