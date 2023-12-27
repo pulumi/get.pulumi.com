@@ -191,56 +191,58 @@ fi
 
 # Now that we have installed Pulumi, if it is not already on the path, let's add a line to the
 # user's profile to add the folder to the PATH for future sessions.
-if [ "${NO_EDIT_PATH}" != "true" ]; then
-    if ! command -v pulumi >/dev/null; then
-        # If we can, we'll add a line to the user's .profile adding ${PULUMI_INSTALL_ROOT}/bin to the PATH
-        SHELL_NAME=$(basename "${SHELL}")
-        PROFILE_FILE=""
+if [ "${NO_EDIT_PATH}" != "true" ] && ! command -v pulumi >/dev/null; then
+    # If we can, we'll add a line to the user's .profile adding ${PULUMI_INSTALL_ROOT}/bin to the PATH
+    SHELL_NAME=$(basename "${SHELL}")
+    PROFILE_FILE=""
 
-        case "${SHELL_NAME}" in
-            "bash")
-                # Terminal.app on macOS prefers .bash_profile to .bashrc, so we prefer that
-                # file when trying to put our export into a profile. On *NIX, .bashrc is
-                # preferred as it is sourced for new interactive shells.
-                if [ "$(uname)" != "Darwin" ]; then
-                    if [ -e "${HOME}/.bashrc" ]; then
-                        PROFILE_FILE="${HOME}/.bashrc"
-                    elif [ -e "${HOME}/.bash_profile" ]; then
-                        PROFILE_FILE="${HOME}/.bash_profile"
-                    fi
-                else
-                    if [ -e "${HOME}/.bash_profile" ]; then
-                        PROFILE_FILE="${HOME}/.bash_profile"
-                    elif [ -e "${HOME}/.bashrc" ]; then
-                        PROFILE_FILE="${HOME}/.bashrc"
-                    fi
+    case "${SHELL_NAME}" in
+        "bash")
+            # Terminal.app on macOS prefers .bash_profile to .bashrc, so we prefer that
+            # file when trying to put our export into a profile. On *NIX, .bashrc is
+            # preferred as it is sourced for new interactive shells.
+            if [ "$(uname)" != "Darwin" ]; then
+                if [ -e "${HOME}/.bashrc" ]; then
+                    PROFILE_FILE="${HOME}/.bashrc"
+                elif [ -e "${HOME}/.bash_profile" ]; then
+                    PROFILE_FILE="${HOME}/.bash_profile"
                 fi
-                ;;
-            "zsh")
-                if [ -e "${ZDOTDIR:-$HOME}/.zshrc" ]; then
-                    PROFILE_FILE="${ZDOTDIR:-$HOME}/.zshrc"
+            else
+                if [ -e "${HOME}/.bash_profile" ]; then
+                    PROFILE_FILE="${HOME}/.bash_profile"
+                elif [ -e "${HOME}/.bashrc" ]; then
+                    PROFILE_FILE="${HOME}/.bashrc"
                 fi
-                ;;
-        esac
-
-        if [ -n "${PROFILE_FILE}" ]; then
-            LINE_TO_ADD="export PATH=\$PATH:${PULUMI_INSTALL_ROOT}/bin"
-            if ! grep -q "# add Pulumi to the PATH" "${PROFILE_FILE}"; then
-                say_white "+ Adding ${PULUMI_INSTALL_ROOT}/bin to \$PATH in ${PROFILE_FILE}"
-                printf "\\n# add Pulumi to the PATH\\n%s\\n" "${LINE_TO_ADD}" >> "${PROFILE_FILE}"
             fi
+            ;;
+        "zsh")
+            if [ -e "${ZDOTDIR:-$HOME}/.zshrc" ]; then
+                PROFILE_FILE="${ZDOTDIR:-$HOME}/.zshrc"
+            fi
+            ;;
+    esac
 
-            EXTRA_INSTALL_STEP="+ Please restart your shell or add ${PULUMI_INSTALL_ROOT}/bin to your \$PATH"
-        else
-            EXTRA_INSTALL_STEP="+ Please add ${PULUMI_INSTALL_ROOT}/bin to your \$PATH"
+    if [ -n "${PROFILE_FILE}" ]; then
+        LINE_TO_ADD="export PATH=\$PATH:${PULUMI_INSTALL_ROOT}/bin"
+        if ! grep -q "# add Pulumi to the PATH" "${PROFILE_FILE}"; then
+            say_white "+ Adding ${PULUMI_INSTALL_ROOT}/bin to \$PATH in ${PROFILE_FILE}"
+            printf "\\n# add Pulumi to the PATH\\n%s\\n" "${LINE_TO_ADD}" >> "${PROFILE_FILE}"
         fi
-    elif [ "$(command -v pulumi)" != "${PULUMI_INSTALL_ROOT}/bin/pulumi" ]; then
-        say_yellow
-        say_yellow "warning: Pulumi has been installed to ${PULUMI_INSTALL_ROOT}/bin, but it looks like there's a different copy"
-        say_yellow "         on your \$PATH at $(dirname "$(command -v pulumi)"). You'll need to explicitly invoke the"
-        say_yellow "         version you just installed or modify your \$PATH to prefer this location."
+
+        EXTRA_INSTALL_STEP="+ Please restart your shell or add ${PULUMI_INSTALL_ROOT}/bin to your \$PATH"
+    else
+        EXTRA_INSTALL_STEP="+ Please add ${PULUMI_INSTALL_ROOT}/bin to your \$PATH"
     fi
 fi
+
+# Warn if the pulumi command is available, but it is in a different location from the current install root.
+if [ "$(command -v pulumi)" != "" ] && [ "$(command -v pulumi)" != "${PULUMI_INSTALL_ROOT}/bin/pulumi" ]; then
+    say_yellow
+    say_yellow "warning: Pulumi has been installed to ${PULUMI_INSTALL_ROOT}/bin, but it looks like there's a different copy"
+    say_yellow "         on your \$PATH at $(dirname "$(command -v pulumi)"). You'll need to explicitly invoke the"
+    say_yellow "         version you just installed or modify your \$PATH to prefer this location."
+fi
+
 say_blue
 say_blue "=== Pulumi is now installed! 🍹 ==="
 if [ "$EXTRA_INSTALL_STEP" != "" ]; then
