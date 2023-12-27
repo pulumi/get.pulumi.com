@@ -75,6 +75,15 @@ while [ $# -gt 0 ]; do
      shift
 done
 
+if [ "${VERSION}" = "dev" ]; then
+    IS_DEV_VERSION=true
+    if ! VERSION=$(curl --retry 3 --fail --silent -L "https://www.pulumi.com/latest-dev-version"); then
+        >&2 say_red "error: could not determine latest dev version of Pulumi, try passing --version X.Y.Z to"
+        >&2 say_red "       install an explicit version, or no argument to get the latest release version"
+        exit 1
+    fi
+fi
+
 if [ -z "${VERSION}" ]; then
 
     # Query pulumi.com/latest-version for the most recent release. Because this approach
@@ -127,6 +136,15 @@ fi
 TARBALL_DEST=$(mktemp -t pulumi.tar.gz.XXXXXXXXXX)
 
 download_tarball() {
+    # If we're installing a dev version, we need to use the s3 URL,
+    # as the version is not uploaded to GitHub releases
+    if [ "$IS_DEV_VERSION" = "true" ]; then
+        say_white "+ Downloading ${TARBALL_URL_FALLBACK}${TARBALL_PATH}..."
+        if ! curl --retry 2 --fail ${SILENT} -L -o "${TARBALL_DEST}" "${TARBALL_URL_FALLBACK}${TARBALL_PATH}"; then
+            return 1
+        fi
+	return 0
+    fi
     # Try to download from github first, then fallback to get.pulumi.com
     say_white "+ Downloading ${TARBALL_URL}${TARBALL_PATH}..."
     # This should opportunistically use the GITHUB_TOKEN to avoid rate limiting

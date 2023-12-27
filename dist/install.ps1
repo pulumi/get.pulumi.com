@@ -9,6 +9,11 @@ $ProgressPreference="SilentlyContinue"
 # Some versions of PowerShell do not support Tls1.2 out of the box, but pulumi.com requires it
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 
+if ($Version -eq "dev") {
+    $latestVersion = (Invoke-WebRequest -UseBasicParsing https://www.pulumi.com/latest-dev-version).Content.Trim()
+    $Version = $latestVersion
+}
+
 if ($Version -eq $null -or $Version -eq "") {
     # Query pulumi.com/latest-version for the most recent release. Because this approach
     # is now used by third parties as well (e.g., GitHub Actions virtual environments),
