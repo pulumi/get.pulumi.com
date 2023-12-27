@@ -159,7 +159,7 @@ download_tarball() {
 if download_tarball; then
     say_white "+ Extracting to ${PULUMI_INSTALL_ROOT}/bin"
 
-    # If \`~/.pulumi/bin\` exists, remove previous files with a pulumi prefix
+    # If `~/.pulumi/bin` exists, remove previous files with a pulumi prefix
     if [ -e "${PULUMI_INSTALL_ROOT}/bin/pulumi" ]; then
         rm "${PULUMI_INSTALL_ROOT}/bin"/pulumi*
     fi
@@ -224,9 +224,9 @@ if [ "${NO_EDIT_PATH}" != "true" ]; then
         esac
 
         if [ -n "${PROFILE_FILE}" ]; then
-            LINE_TO_ADD="export PATH=\$PATH:\${PULUMI_INSTALL_ROOT}/bin"
+            LINE_TO_ADD="export PATH=\$PATH:${PULUMI_INSTALL_ROOT}/bin"
             if ! grep -q "# add Pulumi to the PATH" "${PROFILE_FILE}"; then
-                say_white "+ Adding \${PULUMI_INSTALL_ROOT}/bin to \$PATH in ${PROFILE_FILE}"
+                say_white "+ Adding ${PULUMI_INSTALL_ROOT}/bin to \$PATH in ${PROFILE_FILE}"
                 printf "\\n# add Pulumi to the PATH\\n%s\\n" "${LINE_TO_ADD}" >> "${PROFILE_FILE}"
             fi
 
