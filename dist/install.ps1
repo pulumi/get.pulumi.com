@@ -1,5 +1,7 @@
 param(
-    [string]$Version
+    [string]$Version,
+    [string]$InstallRoot=$null,
+    [switch]$NoEditPath
 )
 
 Set-StrictMode -Version Latest
@@ -47,8 +49,12 @@ if ($PSVersionTable.PSVersion.Major -ge 5) {
     [System.IO.Compression.ZipFile]::ExtractToDirectory($tempZip, $tempDir)
 }
 
-# Install into %USERPROFILE%\.pulumi\bin
-$pulumiInstallRoot = (Join-Path $env:UserProfile ".pulumi")
+$pulumiInstallRoot = $InstallRoot
+if (-not $pulumiInstallRoot) {
+    # Install into %USERPROFILE%\.pulumi\bin by default
+    $pulumiInstallRoot = (Join-Path $env:UserProfile ".pulumi")
+}
+
 $binRoot = (Join-Path $pulumiInstallRoot "bin")
 
 Write-Host "Copying Pulumi to $binRoot"
@@ -79,19 +85,21 @@ if (Test-Path (Join-Path $tempDir (Join-Path "pulumi" "bin"))) {
 
 
 # Attempt to add ourselves to the $PATH, but if we can't, don't fail the overall script.
-try {
-    $envKey = [Microsoft.Win32.Registry]::CurrentUser.OpenSubKey("Environment", [Microsoft.Win32.RegistryKeyPermissionCheck]::ReadWriteSubTree);
-    $val = $envKey.GetValue("PATH", "", [Microsoft.Win32.RegistryValueOptions]::DoNotExpandEnvironmentNames);
-    if ($val -notlike "*${binRoot};*") {
-        $envKey.SetValue("PATH", "$binRoot;$val", [Microsoft.Win32.RegistryValueKind]::ExpandString);
-        Write-Host "Added $binRoot to the `$PATH. Changes may not be visible until after a restart."
+if ($NoEditPath -eq $false) {
+    try {
+        $envKey = [Microsoft.Win32.Registry]::CurrentUser.OpenSubKey("Environment", [Microsoft.Win32.RegistryKeyPermissionCheck]::ReadWriteSubTree);
+        $val = $envKey.GetValue("PATH", "", [Microsoft.Win32.RegistryValueOptions]::DoNotExpandEnvironmentNames);
+        if ($val -notlike "*${binRoot};*") {
+            $envKey.SetValue("PATH", "$binRoot;$val", [Microsoft.Win32.RegistryValueKind]::ExpandString);
+            Write-Host "Added $binRoot to the `$PATH. Changes may not be visible until after a restart."
+        }
+        $envKey.Close();
+    } catch {
     }
-    $envKey.Close();
-} catch {
-}
 
-if ($env:PATH -notlike "*$binRoot*") {
-    $env:PATH = "$binRoot;$env:PATH"
+    if ($env:PATH -notlike "*$binRoot*") {
+        $env:PATH = "$binRoot;$env:PATH"
+    }
 }
 
 # And cleanup our temp files
