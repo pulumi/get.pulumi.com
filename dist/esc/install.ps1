@@ -10,19 +10,12 @@ $ProgressPreference="SilentlyContinue"
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 
 if ($Version -eq $null -or $Version -eq "") {
-    # TODO: removed hardcoded version
-    $latestVersion="0.5.1"
-
-    # TODO: add latest-version support for pulumi/esc
-    # Query pulumi.com/latest-version for the most recent release. Because this approach
+    # Query pulumi.com/esc/latest-version for the most recent release. Because this approach
     # is now used by third parties as well (e.g., GitHub Actions virtual environments),
     # changes to this API should be made with care to avoid breaking any services that
-    # rely on it (and ideally be accompanied by PRs to update them accordingly). Known
-    # consumers of this API include:
-    #
-    # * https://github.com/actions/virtual-environments
-    #
-#    $latestVersion = (Invoke-WebRequest -UseBasicParsing https://www.pulumi.com/latest-version).Content.Trim()
+    # rely on it (and ideally be accompanied by PRs to update them accordingly).
+
+    $latestVersion = (Invoke-WebRequest -UseBasicParsing https://www.pulumi.com/esc/latest-version).Content.Trim()
     $Version = $latestVersion
 }
 
@@ -64,7 +57,7 @@ if (-not (Test-Path -Path $binRoot -PathType Container)) {
 }
 
 # Copy the esc binary to %USERPROFILE%\.pulumi\bin
-Move-Item -Path (Join-Path $tempDir "esc") -Destination $escPath -Force
+Move-Item -Path (Join-Path $tempDir "esc\bin\esc.exe") -Destination $binRoot -Force
 
 
 # Attempt to add ourselves to the $PATH, but if we can't, don't fail the overall script.

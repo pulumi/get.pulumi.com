@@ -76,25 +76,16 @@ while [ $# -gt 0 ]; do
 done
 
 if [ -z "${VERSION}" ]; then
-    # TODO: remove hardcoded version
-    VERSION=0.5.1
-
-    # TODO: add latest-version support for pulumi/esc
-
-    # Query pulumi.com/latest-version for the most recent release. Because this approach
+    # Query pulumi.com/esc/latest-version for the most recent release. Because this approach
     # is now used by third parties as well (e.g., GitHub Actions virtual environments),
     # changes to this API should be made with care to avoid breaking any services that
-    # rely on it (and ideally be accompanied by PRs to update them accordingly). Known
-    # consumers of this API include:
-    #
-    # * https://github.com/actions/virtual-environments
-    #
+    # rely on it (and ideally be accompanied by PRs to update them accordingly).
 
-#    if ! VERSION=$(curl --retry 3 --fail --silent -L "https://www.pulumi.com/latest-version"); then
-#        >&2 say_red "error: could not determine latest version of Pulumi ESC, try passing --version X.Y.Z to"
-#        >&2 say_red "       install an explicit version"
-#        exit 1
-#    fi
+    if ! VERSION=$(curl --retry 3 --fail --silent -L "https://www.pulumi.com/esc/latest-version"); then
+        >&2 say_red "error: could not determine latest version of Pulumi ESC, try passing --version X.Y.Z to"
+        >&2 say_red "       install an explicit version"
+        exit 1
+    fi
 fi
 
 OS=""
@@ -153,14 +144,14 @@ if download_tarball; then
         rm -rf "${HOME}/.pulumi/bin/esc"
     fi
 
-    mkdir -p "${HOME}/.pulumi"
+    mkdir -p "${HOME}/.pulumi/bin"
 
     # Yarn's shell installer does a similar dance of extracting to a temp
     # folder and copying to not depend on additional tar flags
     EXTRACT_DIR=$(mktemp -dt esc.XXXXXXXXXX)
     tar zxf "${TARBALL_DEST}" -C "${EXTRACT_DIR}"
 
-    cp -r "${EXTRACT_DIR}/esc" "${HOME}/.pulumi/bin/"
+    cp "${EXTRACT_DIR}/esc/esc" "${HOME}/.pulumi/bin/"
 
     rm -f "${TARBALL_DEST}"
     rm -rf "${EXTRACT_DIR}"
