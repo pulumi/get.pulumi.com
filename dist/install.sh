@@ -60,6 +60,8 @@ at_exit()
 trap at_exit EXIT
 
 VERSION=""
+INSTALL_ROOT=""
+NO_EDIT_PATH=""
 SILENT=""
 while [ $# -gt 0 ]; do
     case "$1" in
@@ -71,9 +73,24 @@ while [ $# -gt 0 ]; do
         --silent)
             SILENT="--silent"
             ;;
+        --install-root)
+            INSTALL_ROOT=$2
+            ;;
+        --no-edit-path)
+            NO_EDIT_PATH="true"
+            ;;
      esac
      shift
 done
+
+if [ "${VERSION}" = "dev" ]; then
+    IS_DEV_VERSION=true
+    if ! VERSION=$(curl --retry 3 --fail --silent -L "https://www.pulumi.com/latest-dev-version"); then
+        >&2 say_red "error: could not determine latest dev version of Pulumi, try passing --version X.Y.Z to"
+        >&2 say_red "       install an explicit version, or no argument to get the latest release version"
+        exit 1
+    fi
+fi
 
 if [ -z "${VERSION}" ]; then
 
@@ -117,16 +134,35 @@ esac
 TARBALL_URL="https://github.com/pulumi/pulumi/releases/download/v${VERSION}/"
 TARBALL_URL_FALLBACK="https://get.pulumi.com/releases/sdk/"
 TARBALL_PATH=pulumi-v${VERSION}-${OS}-${ARCH}.tar.gz
+PULUMI_INSTALL_ROOT=${INSTALL_ROOT}
 
-if ! command -v pulumi >/dev/null; then
+if [ "$PULUMI_INSTALL_ROOT" = "" ]; then
+    # Default to ~/.pulumi
+    PULUMI_INSTALL_ROOT="${HOME}/.pulumi"
+fi
+PULUMI_CLI="${PULUMI_INSTALL_ROOT}/bin/pulumi"
+
+if [ -d "${PULUMI_CLI}" ]; then
+    say_red "error: ${PULUMI_CLI} already exists and is a directory, refusing to proceed."
+    exit 1
+elif [ ! -f "${PULUMI_CLI}" ]; then
     say_blue "=== Installing Pulumi v${VERSION} ==="
 else
-    say_blue "=== Upgrading Pulumi $(pulumi version) to v${VERSION} ==="
+    say_blue "=== Upgrading Pulumi $(${PULUMI_CLI} version) to v${VERSION} ==="
 fi
 
 TARBALL_DEST=$(mktemp -t pulumi.tar.gz.XXXXXXXXXX)
 
 download_tarball() {
+    # If we're installing a dev version, we need to use the s3 URL,
+    # as the version is not uploaded to GitHub releases
+    if [ "$IS_DEV_VERSION" = "true" ]; then
+        say_white "+ Downloading ${TARBALL_URL_FALLBACK}${TARBALL_PATH}..."
+        if ! curl --retry 2 --fail ${SILENT} -L -o "${TARBALL_DEST}" "${TARBALL_URL_FALLBACK}${TARBALL_PATH}"; then
+            return 1
+        fi
+	return 0
+    fi
     # Try to download from github first, then fallback to get.pulumi.com
     say_white "+ Downloading ${TARBALL_URL}${TARBALL_PATH}..."
     # This should opportunistically use the GITHUB_TOKEN to avoid rate limiting
@@ -142,14 +178,14 @@ download_tarball() {
 }
 
 if download_tarball; then
-    say_white "+ Extracting to $HOME/.pulumi/bin"
+    say_white "+ Extracting to ${PULUMI_INSTALL_ROOT}/bin"
 
     # If `~/.pulumi/bin` exists, remove previous files with a pulumi prefix
-    if [ -e "${HOME}/.pulumi/bin/pulumi" ]; then
-        rm "${HOME}/.pulumi/bin"/pulumi*
+    if [ -e "${PULUMI_INSTALL_ROOT}/bin/pulumi" ]; then
+        rm "${PULUMI_INSTALL_ROOT}/bin"/pulumi*
     fi
 
-    mkdir -p "${HOME}/.pulumi"
+    mkdir -p "${PULUMI_INSTALL_ROOT}"
 
     # Yarn's shell installer does a similar dance of extracting to a temp
     # folder and copying to not depend on additional tar flags
@@ -160,9 +196,9 @@ if download_tarball; then
     # format if we detect it. Newer tarballs just have all the binaries in
     # the top level Pulumi folder.
     if [ -d "${EXTRACT_DIR}/pulumi/bin" ]; then
-        mv "${EXTRACT_DIR}/pulumi/bin" "${HOME}/.pulumi/"
+        mv "${EXTRACT_DIR}/pulumi/bin" "${PULUMI_INSTALL_ROOT}/"
     else
-        cp -r "${EXTRACT_DIR}/pulumi/." "${HOME}/.pulumi/bin/"
+        cp -r "${EXTRACT_DIR}/pulumi/." "${PULUMI_INSTALL_ROOT}/bin/"
     fi
 
     rm -f "${TARBALL_DEST}"
@@ -176,8 +212,8 @@ fi
 
 # Now that we have installed Pulumi, if it is not already on the path, let's add a line to the
 # user's profile to add the folder to the PATH for future sessions.
-if ! command -v pulumi >/dev/null; then
-    # If we can, we'll add a line to the user's .profile adding $HOME/.pulumi/bin to the PATH
+if [ "${NO_EDIT_PATH}" != "true" ] && ! command -v pulumi >/dev/null; then
+    # If we can, we'll add a line to the user's .profile adding ${PULUMI_INSTALL_ROOT}/bin to the PATH
     SHELL_NAME=$(basename "${SHELL}")
     PROFILE_FILE=""
 
@@ -208,19 +244,22 @@ if ! command -v pulumi >/dev/null; then
     esac
 
     if [ -n "${PROFILE_FILE}" ]; then
-        LINE_TO_ADD="export PATH=\$PATH:\$HOME/.pulumi/bin"
+        LINE_TO_ADD="export PATH=\$PATH:${PULUMI_INSTALL_ROOT}/bin"
         if ! grep -q "# add Pulumi to the PATH" "${PROFILE_FILE}"; then
-            say_white "+ Adding \$HOME/.pulumi/bin to \$PATH in ${PROFILE_FILE}"
+            say_white "+ Adding ${PULUMI_INSTALL_ROOT}/bin to \$PATH in ${PROFILE_FILE}"
             printf "\\n# add Pulumi to the PATH\\n%s\\n" "${LINE_TO_ADD}" >> "${PROFILE_FILE}"
         fi
 
-        EXTRA_INSTALL_STEP="+ Please restart your shell or add $HOME/.pulumi/bin to your \$PATH"
+        EXTRA_INSTALL_STEP="+ Please restart your shell or add ${PULUMI_INSTALL_ROOT}/bin to your \$PATH"
     else
-        EXTRA_INSTALL_STEP="+ Please add $HOME/.pulumi/bin to your \$PATH"
+        EXTRA_INSTALL_STEP="+ Please add ${PULUMI_INSTALL_ROOT}/bin to your \$PATH"
     fi
-elif [ "$(command -v pulumi)" != "$HOME/.pulumi/bin/pulumi" ]; then
+fi
+
+# Warn if the pulumi command is available, but it is in a different location from the current install root.
+if [ "$(command -v pulumi)" != "" ] && [ "$(command -v pulumi)" != "${PULUMI_INSTALL_ROOT}/bin/pulumi" ]; then
     say_yellow
-    say_yellow "warning: Pulumi has been installed to $HOME/.pulumi/bin, but it looks like there's a different copy"
+    say_yellow "warning: Pulumi has been installed to ${PULUMI_INSTALL_ROOT}/bin, but it looks like there's a different copy"
     say_yellow "         on your \$PATH at $(dirname "$(command -v pulumi)"). You'll need to explicitly invoke the"
     say_yellow "         version you just installed or modify your \$PATH to prefer this location."
 fi
