@@ -59,6 +59,13 @@ aws.getCallerIdentity().then((callerIdentity) => {
                     Resource: [`${arn}/releases/sdk/*`],
                 },
                 {
+                    Sid: "DevSDKPublicRead",
+                    Effect: "Allow",
+                    Principal: "*",
+                    Action: ["s3:GetObject"],
+                    Resource: [`${arn}/releases/dev-sdk/*`],
+                },
+                {
                     Sid: "ESCPublicRead",
                     Effect: "Allow",
                     Principal: "*",
@@ -70,6 +77,22 @@ aws.getCallerIdentity().then((callerIdentity) => {
     };
 
     const denyListPolicy = new aws.s3.BucketPolicy("deny-list", denyListPolicyState);
+});
+
+new aws.s3.BucketLifecycleConfigurationV2("devReleaseLifeCycleConfiguration", {
+    bucket: contentBucket.id,
+    rules: [
+        {
+            enabled: true,
+            id: "expiryRule",
+            filter: {
+                prefix: "releases/dev-sdk/",
+            },
+            expiration: {
+                days: 30,
+            },
+        },
+    ],
 });
 
 // IAM Role available to CI/CD bots to allow them to upload binaries as part of the release process.
@@ -134,6 +157,7 @@ const uploadPolicyReleaseContentBucketStatement: aws.iam.PolicyStatement = {
         pulumi.interpolate`${contentBucket.arn}/esc/releases/*`,
         pulumi.interpolate`${contentBucket.arn}/releases/plugins/*`,
         pulumi.interpolate`${contentBucket.arn}/releases/sdk/*`,
+        pulumi.interpolate`${contentBucket.arn}/releases/dev-sdk/*`,
     ],
 };
 
