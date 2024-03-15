@@ -253,7 +253,7 @@ const logsBucketACL = new aws.s3.BucketAclV2(`${fullDomain}-logs-acl`, {
             id: productionCanonicalId
         }
     }
-}, {dependsOn: logsBucket});
+}, {dependsOn: logsBucketOwnershipControl});
 
 const buildDateHeaderName: string = 'build-date';
 const buildDateHeaderValue: string = new Date().valueOf().toString();
