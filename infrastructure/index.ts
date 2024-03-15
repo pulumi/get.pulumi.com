@@ -208,7 +208,7 @@ const logsBucketOwnershipControl = new aws.s3.BucketOwnershipControls(`${fullDom
     rule: {
         objectOwnership: "ObjectWriter",
     },
-});
+}, {dependsOn: logsBucket});
 
 // Add ACL for Data Account to access this bucket
 const airflowStackRef = new pulumi.StackReference(`pulumi/dwh-workflows-orchestrate-airflow/production`)
@@ -253,7 +253,7 @@ const logsBucketACL = new aws.s3.BucketAclV2(`${fullDomain}-logs-acl`, {
             id: productionCanonicalId
         }
     }
-});
+}, {dependsOn: logsBucket});
 
 const buildDateHeaderName: string = 'build-date';
 const buildDateHeaderValue: string = new Date().valueOf().toString();
