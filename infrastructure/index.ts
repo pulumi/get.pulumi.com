@@ -15,6 +15,8 @@ const subDomain = "get";
 const domain = cfg.require("domain");
 const fullDomain = `${subDomain}.${domain}`;
 const certificateArn = cfg.require("certificateArn");
+const canonicalUserId = aws.s3.getCanonicalUserId({});
+const productionCanonicalId = canonicalUserId.then(canonicalUserId => canonicalUserId.id);
 
 const contentBucket = new aws.s3.Bucket(`${fullDomain}-bucket`, {
     bucket: fullDomain,
@@ -199,9 +201,59 @@ const rolePolicyAttachment = new aws.iam.RolePolicyAttachment("PulumiUploadRelea
     policyArn: uploadReleasePolicy.arn,
 });
 
-const logsBucket = new aws.s3.Bucket(`${fullDomain}-logs`, {
-    acl: "log-delivery-write",
-});
+const logsBucket = new aws.s3.Bucket(`${fullDomain}-logs`);
+
+const logsBucketOwnershipControl = new aws.s3.BucketOwnershipControls(`${fullDomain}-logs-ownership`, {
+    bucket: logsBucket.id,
+    rule: {
+        objectOwnership: "ObjectWriter",
+    },
+}, {dependsOn: logsBucket});
+
+// Add ACL for Data Account to access this bucket
+const airflowStackRef = new pulumi.StackReference(`pulumi/dwh-workflows-orchestrate-airflow/production`)
+const dataAccountCanonicalID = airflowStackRef.requireOutputValue("dataAccountCanonicalID")
+
+// Constant Canonical ID for cloudfront, documented here: https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/AccessLogs.html
+const cloudFrontCanonicalID = "c4c1ede66af53448b93c283ce9448c4ba468c9432aa01d700d3878632f77d2d0"
+const logsBucketACL = new aws.s3.BucketAclV2(`${fullDomain}-logs-acl`, {
+    bucket: logsBucket.id,
+    accessControlPolicy: {
+        grants: [
+            {
+                grantee: {
+                    type: "Group",
+                    uri: "http://acs.amazonaws.com/groups/s3/LogDelivery"
+                },
+                permission: "READ_ACP",
+            },
+            {
+                grantee: {
+                    type: "Group",
+                    uri: "http://acs.amazonaws.com/groups/s3/LogDelivery"
+                },
+                permission: "WRITE",
+            },
+            {
+                grantee: {
+                    type: "CanonicalUser",
+                    id: cloudFrontCanonicalID
+                },
+                permission: "FULL_CONTROL",
+            },
+            {
+                grantee: {
+                    type: "CanonicalUser",
+                    id: dataAccountCanonicalID
+                },
+                permission: "READ",
+            },
+        ],
+        owner: {
+            id: productionCanonicalId
+        }
+    }
+}, {dependsOn: logsBucketOwnershipControl});
 
 const buildDateHeaderName: string = 'build-date';
 const buildDateHeaderValue: string = new Date().valueOf().toString();
