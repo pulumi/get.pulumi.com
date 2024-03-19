@@ -206,11 +206,13 @@ const logsBucket = new aws.s3.Bucket(`${fullDomain}-logs`);
 const logsBucketOwnershipControl = new aws.s3.BucketOwnershipControls(`${fullDomain}-logs-ownership`, {
     bucket: logsBucket.id,
     rule: {
-        objectOwnership: "ObjectWriter",
+        objectOwnership: "BucketOwnerPreferred",
     },
 }, {dependsOn: logsBucket});
 
 // Add ACL for Data Account to access this bucket
+
+// Data AWS Account Canonical ID
 const airflowStackRef = new pulumi.StackReference(`pulumi/dwh-workflows-orchestrate-airflow/production`)
 const dataAccountCanonicalID = airflowStackRef.requireOutputValue("dataAccountCanonicalID")
 
@@ -244,9 +246,23 @@ const logsBucketACL = new aws.s3.BucketAclV2(`${fullDomain}-logs-acl`, {
             {
                 grantee: {
                     type: "CanonicalUser",
+                    id: productionCanonicalId
+                },
+                permission: "FULL_CONTROL",
+            },
+            {
+                grantee: {
+                    type: "CanonicalUser",
                     id: dataAccountCanonicalID
                 },
                 permission: "READ",
+            },
+            {
+                grantee: {
+                    type: "CanonicalUser",
+                    id: dataAccountCanonicalID
+                },
+                permission: "READ_ACP",
             },
         ],
         owner: {
