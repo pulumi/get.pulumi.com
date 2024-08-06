@@ -16,15 +16,18 @@ const domain = cfg.require("domain");
 const fullDomain = `${subDomain}.${domain}`;
 const certificateArn = cfg.require("certificateArn");
 const canonicalUserId = aws.s3.getCanonicalUserId({});
-const productionCanonicalId = canonicalUserId.then(canonicalUserId => canonicalUserId.id);
+const productionCanonicalId = canonicalUserId.then(user => user.id);
 
-const contentBucket = new aws.s3.Bucket(`${fullDomain}-bucket`, {
-    bucket: fullDomain,
-    acl: "public-read",
-    versioning: {
-        enabled: true,
+const contentBucket = new aws.s3.Bucket(
+    `${fullDomain}-bucket`,
+    {
+        bucket: fullDomain,
+        acl: "public-read",
+        versioning: {
+            enabled: true,
+        },
     },
-}, { protect: true });
+    { protect: true });
 
 // contentBucket needs to have the "public-read" ACL so its contents can be ready by CloudFront and
 // served. But we deny the s3:ListBucket permission to prevent unintended disclosure of the bucket's
@@ -66,7 +69,7 @@ aws.getCallerIdentity().then((callerIdentity) => {
                     Principal: "*",
                     Action: ["s3:GetObject"],
                     Resource: [`${arn}/esc/releases/*`],
-                }
+                },
             ],
         })),
     };
@@ -99,7 +102,7 @@ const uploadReleaseRole = new aws.iam.Role("PulumiUploadRelease", {
                 Condition: {
                     StringEquals: {
                         "sts:ExternalId": [
-                            "upload-pulumi-release"
+                            "upload-pulumi-release",
                         ],
                     },
                 },
@@ -113,7 +116,7 @@ const uploadReleaseRole = new aws.iam.Role("PulumiUploadRelease", {
                     ],
                 },
                 Action: "sts:TagSession",
-            }
+            },
         ],
     },
     tags: {
@@ -203,81 +206,92 @@ const rolePolicyAttachment = new aws.iam.RolePolicyAttachment("PulumiUploadRelea
 
 const logsBucket = new aws.s3.Bucket(`${fullDomain}-logs`);
 
-const logsBucketOwnershipControl = new aws.s3.BucketOwnershipControls(`${fullDomain}-logs-ownership`, {
-    bucket: logsBucket.id,
-    rule: {
-        objectOwnership: "BucketOwnerPreferred",
+const logsBucketOwnershipControl = new aws.s3.BucketOwnershipControls(
+    `${fullDomain}-logs-ownership`,
+    {
+        bucket: logsBucket.id,
+        rule: {
+            objectOwnership: "BucketOwnerPreferred",
+        },
     },
-}, {dependsOn: logsBucket});
+    { dependsOn: logsBucket },
+    );
 
 // Add ACL for Data Account to access this bucket
 
 // Data AWS Account Canonical ID
-const airflowStackRef = new pulumi.StackReference(`pulumi/dwh-workflows-orchestrate-airflow/production`)
-const dataAccountCanonicalID = airflowStackRef.requireOutputValue("dataAccountCanonicalID")
+const airflowStackRef = new pulumi.StackReference(`pulumi/dwh-workflows-orchestrate-airflow/production`);
+const dataAccountCanonicalID = airflowStackRef.requireOutputValue("dataAccountCanonicalID");
 
-// Constant Canonical ID for cloudfront, documented here: https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/AccessLogs.html
-const cloudFrontCanonicalID = "c4c1ede66af53448b93c283ce9448c4ba468c9432aa01d700d3878632f77d2d0"
-const logsBucketACL = new aws.s3.BucketAclV2(`${fullDomain}-logs-acl`, {
-    bucket: logsBucket.id,
-    accessControlPolicy: {
-        grants: [
-            {
-                grantee: {
-                    type: "Group",
-                    uri: "http://acs.amazonaws.com/groups/s3/LogDelivery"
+// Constant Canonical ID for cloudfront, documented here:
+// https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/AccessLogs.html
+const cloudFrontCanonicalID = "c4c1ede66af53448b93c283ce9448c4ba468c9432aa01d700d3878632f77d2d0";
+const logsBucketACL = new aws.s3.BucketAclV2(
+    `${fullDomain}-logs-acl`,
+    {
+        bucket: logsBucket.id,
+        accessControlPolicy: {
+            grants: [
+                {
+                    grantee: {
+                        type: "Group",
+                        uri: "http://acs.amazonaws.com/groups/s3/LogDelivery",
+                    },
+                    permission: "READ_ACP",
                 },
-                permission: "READ_ACP",
-            },
-            {
-                grantee: {
-                    type: "Group",
-                    uri: "http://acs.amazonaws.com/groups/s3/LogDelivery"
+                {
+                    grantee: {
+                        type: "Group",
+                        uri: "http://acs.amazonaws.com/groups/s3/LogDelivery",
+                    },
+                    permission: "WRITE",
                 },
-                permission: "WRITE",
-            },
-            {
-                grantee: {
-                    type: "CanonicalUser",
-                    id: cloudFrontCanonicalID
+                {
+                    grantee: {
+                        type: "CanonicalUser",
+                        id: cloudFrontCanonicalID,
+                    },
+                    permission: "FULL_CONTROL",
                 },
-                permission: "FULL_CONTROL",
-            },
-            {
-                grantee: {
-                    type: "CanonicalUser",
-                    id: productionCanonicalId
+                {
+                    grantee: {
+                        type: "CanonicalUser",
+                        id: productionCanonicalId,
+                    },
+                    permission: "FULL_CONTROL",
                 },
-                permission: "FULL_CONTROL",
-            },
-            {
-                grantee: {
-                    type: "CanonicalUser",
-                    id: dataAccountCanonicalID
+                {
+                    grantee: {
+                        type: "CanonicalUser",
+                        id: dataAccountCanonicalID,
+                    },
+                    permission: "READ",
                 },
-                permission: "READ",
-            },
-            {
-                grantee: {
-                    type: "CanonicalUser",
-                    id: dataAccountCanonicalID
+                {
+                    grantee: {
+                        type: "CanonicalUser",
+                        id: dataAccountCanonicalID,
+                    },
+                    permission: "READ_ACP",
                 },
-                permission: "READ_ACP",
+            ],
+            owner: {
+                id: productionCanonicalId,
             },
-        ],
-        owner: {
-            id: productionCanonicalId
-        }
-    }
-}, {dependsOn: logsBucketOwnershipControl});
+        },
+    },
+    {
+        dependsOn: logsBucketOwnershipControl,
+    },
+);
 
-const buildDateHeaderName: string = 'build-date';
+const buildDateHeaderName: string = "build-date";
 const buildDateHeaderValue: string = new Date().valueOf().toString();
 
 const cfViewerRequestFunction = new aws.cloudfront.Function(
-    'cf-viewer-request',
+    "cf-viewer-request",
     {
-        runtime: 'cloudfront-js-1.0',
+        runtime: "cloudfront-js-1.0",
         publish: true,
         code: `function handler(event){
 var request = event.request;
@@ -304,7 +318,9 @@ const distributionArgs: aws.cloudfront.DistributionArgs = {
         targetOriginId: contentBucket.bucketDomainName.apply(d => `S3-${d}`),
         viewerProtocolPolicy: "redirect-to-https",
 
+        // tslint:disable-next-line:max-line-length
         // https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/using-managed-response-headers-policies.html#managed-response-headers-policies-security
+        // tslint:disable-next-line:max-line-length
         responseHeadersPolicyId: "67f7725c-6f97-4210-82d7-5512b31e9d03", // SecurityHeadersPolicy from https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/using-managed-response-headers-policies.html
 
         // TTLs. These are used since presumably there aren't any cache control settings
@@ -316,11 +332,12 @@ const distributionArgs: aws.cloudfront.DistributionArgs = {
         compress: true,
 
         functionAssociations: [{
-            eventType: 'viewer-request',
+            eventType: "viewer-request",
             functionArn: cfViewerRequestFunction.arn,
         }],
 
-        // Include a Lambda to rewrite origin requests including a '+' to using '%2B' since S3 interprets '+' incorrectly
+        // Include a Lambda to rewrite origin requests including a '+' to using '%2B'
+        // since S3 interprets '+' incorrectly
         lambdaFunctionAssociations: [{
             eventType: "origin-request",
             lambdaArn: requestRewriteLambda,
