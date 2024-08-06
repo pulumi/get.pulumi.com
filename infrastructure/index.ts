@@ -159,9 +159,11 @@ const productionImageRepositories = [
     "pulumi-go",
     "pulumi-nodejs",
     "pulumi-python",
+    "pulumi-python-*", // We have individual repos for versions python 3.9-3.12
     "pulumi-kubernetes-operator",
     "pulumi-base",
     "pulumi-provider-build-environment",
+    "pulumi-java",
 ].map(repo => `arn:aws:ecr-public::058607598222:repository/${repo}`);
 
 // Allow uploading to the production release repositories.
