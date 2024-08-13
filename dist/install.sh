@@ -146,14 +146,121 @@ if [ -d "${PULUMI_CLI}" ]; then
     say_red "error: ${PULUMI_CLI} already exists and is a directory, refusing to proceed."
     exit 1
 elif [ ! -f "${PULUMI_CLI}" ]; then
-    say_blue "=== Installing Pulumi v${VERSION} ==="
+    say_blue "=== Installing Pulumi ${VERSION} ==="
 else
-    say_blue "=== Upgrading Pulumi $(${PULUMI_CLI} version) to v${VERSION} ==="
+    say_blue "=== Upgrading Pulumi $(${PULUMI_CLI} version) to ${VERSION} ==="
 fi
 
 TARBALL_DEST=$(mktemp -t pulumi.tar.gz.XXXXXXXXXX)
 
+PR_NUMBER=""
+download_github_pr() {
+    PR_NUMBER="$1"
+
+    HEAD_SHA=$(
+        curl --retry 2 --fail --silent -L \
+            -H "Accept: application/vnd.github+json" \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            "https://api.github.com/repos/pulumi/pulumi/pulls/${PR_NUMBER}" \
+        | jq -r '.head.sha')
+
+    if [ -z "${HEAD_SHA}" ]; then
+        >&2 say_red "error: could not find HEAD SHA for PR ${PR_NUMBER}"
+        exit 1
+    fi
+    >&2 say_white "+ Found PR ${PR_NUMBER} with HEAD SHA ${HEAD_SHA}"
+
+    WORKFLOW_RUN_ID=$(
+        curl --retry 2 --fail --silent -L \
+            -H "Accept: application/vnd.github+json" \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            "https://api.github.com/repos/pulumi/pulumi/actions/runs?head_sha=${HEAD_SHA}" \
+        | jq -r '
+            .workflow_runs
+            | map(select(.referenced_workflows[].path
+                            | contains("ci.yml")))
+            | max_by(.run_started_at) | .id')
+
+    if [ -z "${WORKFLOW_RUN_ID}" ]; then
+        >&2 say_red "error: could not find workflow run for PR ${PR_NUMBER}"
+        exit 1
+    fi
+    >&2 say_white "+ Found workflow run ${WORKFLOW_RUN_ID}"
+
+    # We need to use GO style ARCH for the artifacts
+    ARCH=""
+    case $(uname -m) in
+        "x86_64") ARCH="amd64";;
+        "arm64") ARCH="arm64";;
+        "aarch64") ARCH="arm64";;
+        *)
+            print_unsupported_platform
+            exit 1
+            ;;
+    esac
+
+    # now we get the artifact URL for the user's OS and arch
+    # we filter by the name of the artifact: artifacts-cli-${os}-${arch}.tar.gz
+    ARTIFACT_URL=$(
+        curl --retry 2 --fail --silent -L \ \
+            -H "Accept: application/vnd.github+json" \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            "https://api.github.com/repos/pulumi/pulumi/actions/runs/${WORKFLOW_RUN_ID}/artifacts?name=artifacts-cli-${OS}-${ARCH}" \
+        | jq -r '.artifacts[0].archive_download_url')
+
+    if [ -z "${ARTIFACT_URL}" ]; then
+        >&2 say_red "error: could not find artifact URL for PR ${PR_NUMBER}"
+        exit 1
+    fi
+    >&2 say_white "+ Found artifact URL ${ARTIFACT_URL}"
+
+    printf "%s" "${ARTIFACT_URL}"
+}
+
 download_tarball() {
+    # if the version begins with pr# then we are installing a PR build
+    case $VERSION in
+        # case insensitive match
+        [Pp][Rr]#*)
+            # try to use `gh auth login` to get a token
+            if [ -z "${GITHUB_TOKEN}" ] && command -v gh >/dev/null; then
+                GITHUB_TOKEN=$(gh auth token)
+            fi
+            if [ -z "${GITHUB_TOKEN}" ]; then
+                >&2 say_red "error: GITHUB_TOKEN is required to install PR builds"
+                return 1
+            fi
+
+            PR_NUMBER=$(echo "${VERSION}" | sed 's/[Pp][Rr]#//')
+            ZIP_URL=$(download_github_pr "${PR_NUMBER}")
+            if [ -z "${ZIP_URL}" ]; then
+                return 1
+            fi
+            ZIP_DEST=$(mktemp -t pulumi.tar.gz.zip.XXXXXXXXXX)
+            say_white "+ Downloading ${ZIP_URL} to ${ZIP_DEST}..."
+            if ! curl --retry 2 --fail ${SILENT} -L -H "Authorization: Bearer ${GITHUB_TOKEN}" -o "${ZIP_DEST}" "${ZIP_URL}"; then
+                return 1
+            fi
+            # the zip file contains a tarball named something arbitrary, like
+            # pulumi-v3.129.1-alpha.1723553965-linux-x64.tar.gz
+            # we won't know the exact name
+
+            # extract the tarball from the zip
+            ZIP_EXTRACT_DIR=$(mktemp -dt pulumi.zip.XXXXXXXXXX)
+            say_white "+ Extracting ${ZIP_DEST} to ${ZIP_EXTRACT_DIR}..."
+            unzip -q "${ZIP_DEST}" -d "${ZIP_EXTRACT_DIR}"
+            # find the tarball
+            TARBALL_DEST=$(find "${ZIP_EXTRACT_DIR}" -name "pulumi-*.tar.gz")
+            if [ -z "${TARBALL_DEST}" ]; then
+                >&2 say_red "error: could not find tarball in zip file"
+                return 1
+            fi
+            # clean up the zip file
+            rm -f "${ZIP_DEST}"
+            return 0
+        ;;
+    esac
+
     # If we're installing a dev version, we need to use the s3 URL,
     # as the version is not uploaded to GitHub releases
     if [ "$IS_DEV_VERSION" = "true" ]; then
@@ -161,7 +268,7 @@ download_tarball() {
         if ! curl --retry 2 --fail ${SILENT} -L -o "${TARBALL_DEST}" "${TARBALL_URL_FALLBACK}${TARBALL_PATH}"; then
             return 1
         fi
-	return 0
+	    return 0
     fi
     # Try to download from github first, then fallback to get.pulumi.com
     say_white "+ Downloading ${TARBALL_URL}${TARBALL_PATH}..."
@@ -204,10 +311,15 @@ if download_tarball; then
     rm -f "${TARBALL_DEST}"
     rm -rf "${EXTRACT_DIR}"
 else
-    >&2 say_red "error: failed to download ${TARBALL_URL}"
-    >&2 say_red "       check your internet and try again; if the problem persists, file an"
-    >&2 say_red "       issue at https://github.com/pulumi/pulumi/issues/new/choose"
-    exit 1
+    if [ "$PR_NUMBER" != "" ]; then
+        >&2 say_red "error: failed to download PR ${PR_NUMBER}"
+        exit 0 # skip ordinary error message
+    else
+        >&2 say_red "error: failed to download ${TARBALL_URL}"
+        >&2 say_red "       check your internet and try again; if the problem persists, file an"
+        >&2 say_red "       issue at https://github.com/pulumi/pulumi/issues/new/choose"
+        exit 1
+    fi
 fi
 
 # Now that we have installed Pulumi, if it is not already on the path, let's add a line to the
