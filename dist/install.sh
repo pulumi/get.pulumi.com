@@ -50,7 +50,8 @@ at_exit()
     # shellcheck disable=SC2181
     # https://github.com/koalaman/shellcheck/wiki/SC2181
     # Disable because we don't actually know the command we're running
-    if [ "$?" -ne 0 ]; then
+    STATUS="$?"
+    if [ "$STATUS" -ne 0 ] && [ "$STATUS" -ne 33 ]; then
         >&2 say_red
         >&2 say_red "We're sorry, but it looks like something might have gone wrong during installation."
         >&2 say_red "If you need help, please join us on https://slack.pulumi.com/"
@@ -268,7 +269,7 @@ download_tarball() {
         if ! curl --retry 2 --fail ${SILENT} -L -o "${TARBALL_DEST}" "${TARBALL_URL_FALLBACK}${TARBALL_PATH}"; then
             return 1
         fi
-	    return 0
+        return 0
     fi
     # Try to download from github first, then fallback to get.pulumi.com
     say_white "+ Downloading ${TARBALL_URL}${TARBALL_PATH}..."
@@ -313,7 +314,7 @@ if download_tarball; then
 else
     if [ "$PR_NUMBER" != "" ]; then
         >&2 say_red "error: failed to download PR ${PR_NUMBER}"
-        exit 0 # skip ordinary error message
+        exit 33 # skip ordinary error message
     else
         >&2 say_red "error: failed to download ${TARBALL_URL}"
         >&2 say_red "       check your internet and try again; if the problem persists, file an"
