@@ -156,8 +156,10 @@ const productionImageRepositories = [
     "esc",
     "pulumi",
     "pulumi-dotnet",
+    "pulumi-dotnet-*", // We have individual repos for versions dotnet 6.0, 8.0
     "pulumi-go",
     "pulumi-nodejs",
+    "pulumi-nodejs-*", // We have individual repos for versions nodejs 18, 20, 22
     "pulumi-python",
     "pulumi-python-*", // We have individual repos for versions python 3.9-3.12
     "pulumi-kubernetes-operator",
