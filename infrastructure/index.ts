@@ -5,9 +5,10 @@ import * as mime from "mime";
 import * as path from "path";
 
 import * as aws from "@pulumi/aws";
+import * as std from "@pulumi/std";
 import * as pulumi from "@pulumi/pulumi";
 
-import requestRewriteLambda from "./requestRewriter";
+import requestRewriteLambda, { awsUsEast1 } from "./requestRewriter";
 
 const cfg = new pulumi.Config(pulumi.getProject());
 
@@ -17,6 +18,7 @@ const fullDomain = `${subDomain}.${domain}`;
 const certificateArn = cfg.require("certificateArn");
 const canonicalUserId = aws.s3.getCanonicalUserId({});
 const productionCanonicalId = canonicalUserId.then(user => user.id);
+const repoDefaultDescription = "Pulumi’s modern infrastructure as code platform empowers cloud engineering teams to work better together to ship faster using the world’s most popular programming languages. Pulumi works with AWS, Kubernetes, and over 50 cloud infrastructure providers."
 
 const contentBucket = new aws.s3.Bucket(
     `${fullDomain}-bucket`,
@@ -151,24 +153,49 @@ const uploadPolicyReleaseEcrAuthorizationTokenStatement: aws.iam.PolicyStatement
     Resource: ["*"],
 };
 
-// For now, we've manually created the repos and won't manage them in this stack (there's no support in the provider).
-const productionImageRepositories = [
-    "esc",
-    "pulumi",
-    "pulumi-dotnet",
-    "pulumi-dotnet-*", // We have individual repos for versions dotnet 6.0 & 8.0
-    "pulumi-go",
-    "pulumi-nodejs",
-    "pulumi-nodejs-*", // We have individual repos for versions nodejs 18, 20 & 22
-    "pulumi-python",
-    "pulumi-python-*", // We have individual repos for versions python 3.9-3.12
-    "pulumi-kubernetes-operator",
-    "pulumi-base",
-    "pulumi-provider-build-environment",
-    "pulumi-java",
-].map(repo => `arn:aws:ecr-public::058607598222:repository/${repo}`);
+interface RepoInfo {
+    name: string,
+    about?: string,
+}
 
-// Allow uploading to the production release repositories.
+const repositoryNames: RepoInfo[] = [
+    { name: "esc", about: "Pulumi ESC container"},
+    { name: "pulumi", about: "Pulumi CLI container"},
+    { name: "pulumi-dotnet", about: "Pulumi CLI container for dotnet"},
+    { name: "pulumi-dotnet-6.0", about: "Pulumi CLI container for dotnet 6.0"},
+    { name: "pulumi-dotnet-8.0", about: "Pulumi CLI container for dotnet 8.0"},
+    { name: "pulumi-go", about: "Pulumi CLI container for Go"},
+    { name: "pulumi-nodejs", about: "Pulumi CLI container for NodeJS"},
+    { name: "pulumi-nodejs-18", about: "Pulumi CLI container for NodeJS 18"},
+    { name: "pulumi-nodejs-20", about: "Pulumi CLI container for NodeJS 20"},
+    { name: "pulumi-nodejs-22", about: "Pulumi CLI container for NodeJS 22"},
+    { name: "pulumi-python", about: "Pulumi CLI container for Python"},
+    { name: "pulumi-python-3.9", about: "Pulumi CLI container for Python 3.9"},
+    { name: "pulumi-python-3.10", about: "Pulumi CLI container for Python 3.10"},
+    { name: "pulumi-python-3.11", about: "Pulumi CLI container for Python 3.11"},
+    { name: "pulumi-python-3.12", about: "Pulumi CLI container for Python 3.12"},
+    { name: "pulumi-base", about: "Pulumi CLI container base"},
+    { name: "pulumi-provider-build-environment"},
+    { name: "pulumi-java", about: "Pulumi CLI container for Java"},
+    { name: "pulumi-kubernetes-operator", about: 
+        "The Pulumi Kubernetes Operator is an extension pattern that enables Kubernetes users to create a Stack as a first-class API resource, and use the StackController to drive the updates of the Stack until success.\n\n" +
+        "Deploying Pulumi Stacks in Kubernetes provides the capability to build out CI/CD and automation systems into your clusters, creating native support to manage your infrastructure alongside your Kubernetes workloads."
+    },
+]
+
+const repos = repositoryNames.map(repoInfo =>
+    new aws.ecrpublic.Repository(repoInfo.name, {
+        repositoryName: repoInfo.name,
+        catalogData: {
+            description: repoDefaultDescription,
+            aboutText: repoInfo.about || undefined,
+            logoImageBlob: std.filebase64({
+                input: "pulumi_repo_logo.png",
+            }).then(invoke => invoke.result),
+        }
+    }, { provider: awsUsEast1 }) // Public repos have to be in us-east-1
+);
+
 const uploadPolicyReleaseEcrUploadImageStatement: aws.iam.PolicyStatement = {
     Effect: "Allow",
     Action: [
@@ -182,16 +209,8 @@ const uploadPolicyReleaseEcrUploadImageStatement: aws.iam.PolicyStatement = {
         "ecr-public:UploadLayerPart",
         "ecr-public:PutImage",
     ],
-    Resource: productionImageRepositories,
+    Resource: repos.map(repo => repo.arn),
 };
-
-const uploadReleasePolicyStatement = pulumi.getStack() === "production" ? [
-    uploadPolicyReleaseContentBucketStatement,
-    uploadPolicyReleaseEcrAuthorizationTokenStatement,
-    uploadPolicyReleaseEcrUploadImageStatement,
-] : [
-    uploadPolicyReleaseContentBucketStatement,
-];
 
 // Permissions granted to those who assume the upload releases role.
 const uploadReleasePolicy = new aws.iam.Policy("PulumiUploadReleasePolicy", {
@@ -199,7 +218,11 @@ const uploadReleasePolicy = new aws.iam.Policy("PulumiUploadReleasePolicy", {
     description: "Upload Pulumi ",
     policy: {
         Version: "2012-10-17",
-        Statement: uploadReleasePolicyStatement,
+        Statement: [
+            uploadPolicyReleaseContentBucketStatement,
+            uploadPolicyReleaseEcrAuthorizationTokenStatement,
+            uploadPolicyReleaseEcrUploadImageStatement,
+        ],
     },
 });
 
