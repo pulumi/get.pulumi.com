@@ -6,6 +6,8 @@ The worker will try to serve files from 3 different tiers in order
 
 When serving from S3, objects will be pulled into R2 and the cache.
 
+It will always ensure the object is unmodified in R2, so you can do a purge of a key simply by deleting its R2 object
+
 ## Development
 
 Worker development benefits from the [wrangler CLI](https://developers.cloudflare.com/workers/wrangler/)
