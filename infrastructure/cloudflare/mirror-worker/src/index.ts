@@ -18,7 +18,7 @@ async function serveFromS3(ctx: RequestContext): Promise<Response> {
 }
 
 function cacheResponse(ctx: RequestContext, response: Response) : Promise<void> {
-  if (response.status === 200) {
+  if (response.status === 200 && response.body !== null) {
     console.log(`Caching ${ctx.request.url}`)
     const modifiedResponse = response.clone()
     return caches.default.put(ctx.request, modifiedResponse);

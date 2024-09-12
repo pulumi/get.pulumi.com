@@ -22,9 +22,13 @@ interface ObjectPart {
  * @param request Request settings to use.
  * @returns A promise that resolves to the response from S3.
  */
-export async function s3Fetch(url: URL, request: Request): Promise<Response> {
+export async function s3Fetch(url: URL, oldRequest: Request): Promise<Response> {
     // We need to encode `+` to `%2B` in order to properly fetch such URLS from S3
     const urlString = url.toString().replace(/\+/g, '%2B')
+    // Don't try to get S3 to compress small checksum files
+    const headers = new Headers(oldRequest.headers)
+    headers.delete('Accept-Encoding')
+    const request = new Request(oldRequest, { cf: { }, headers } )
     if (request.headers.has('range')) {
         console.log(`[S3] ${request.method} ${request.headers.get('range')} ${urlString}`)
     } else {
