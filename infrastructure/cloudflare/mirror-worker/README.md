@@ -1,17 +1,23 @@
-# Template: worker-typescript
+This is a [Cloudflare Worker](https://developers.cloudflare.com/workers/) that functions similar to [Sippy](https://developers.cloudflare.com/r2/data-migration/sippy/#_top).
 
-[![Deploy with Workers](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/cloudflare/workers-sdk/tree/main/templates/worker-typescript)
+The worker will try to serve files from 3 different tiers in order
 
-A batteries included template for kick starting a TypeScript Cloudflare worker project.
+   Cache  ->  R2  ->  S3
 
-## Setup
+When serving from S3, objects will be pulled into R2 and the cache.
 
-To create a `my-project` directory using this template, run:
+## Development
 
-```sh
-$ npx wrangler generate my-project worker-typescript
-# or
-$ yarn wrangler generate my-project worker-typescript
-# or
-$ pnpm wrangler generate my-project worker-typescript
-```
+Worker development benefits from the [wrangler CLI](https://developers.cloudflare.com/workers/wrangler/)
+
+To run a dev version:
+
+ * npx wrangler dev --remote
+
+To deploy a new version of the worker:
+
+ * npx wrangler deploy
+
+To tail live logs:
+
+ * npx wrangler tail
