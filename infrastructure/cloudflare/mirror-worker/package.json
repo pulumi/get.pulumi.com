@@ -1,10 +1,10 @@
 {
-	"name": "template-worker-typescript",
+	"name": "mirror-worker",
 	"version": "0.0.0",
 	"private": true,
 	"scripts": {
 		"deploy": "wrangler deploy src/index.ts",
-		"dev": "wrangler dev",
+		"dev": "wrangler dev --remote",
 		"start": "wrangler dev",
 		"test": "vitest run"
 	},

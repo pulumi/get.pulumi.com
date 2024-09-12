@@ -1,6 +1,6 @@
 name = "mirror-worker"
 main = "./src/index.ts"
-compatibility_date = "2024-09-11"
+compatibility_date = "2024-08-21"
 compatibility_flags = [ "nodejs_compat" ]
 
 # Variable bindings. These are arbitrary, plaintext strings (similar to environment variables)
