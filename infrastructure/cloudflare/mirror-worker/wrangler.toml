@@ -14,7 +14,7 @@ S3_SOURCE_BUCKET = "https://s3.us-west-2.amazonaws.com/get.pulumi.com/"
 [[r2_buckets]]
 binding = 'LINKED_R2_BUCKET'
 bucket_name = 'get-pulumi-com-mirror'
-preview_bucket_name = 'worker-test-bucket'
+preview_bucket_name = 'get-pulumi-com-dev'
 
 # Bind a KV Namespace. Use KV as persistent storage for small key-value pairs.
 # Docs: https://developers.cloudflare.com/workers/runtime-apis/kv
