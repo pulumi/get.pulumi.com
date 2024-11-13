@@ -164,6 +164,7 @@ const repositoryNames: RepoInfo[] = [
     { name: "pulumi-dotnet", about: "Pulumi CLI container for dotnet"},
     { name: "pulumi-dotnet-6.0", about: "Pulumi CLI container for dotnet 6.0"},
     { name: "pulumi-dotnet-8.0", about: "Pulumi CLI container for dotnet 8.0"},
+    { name: "pulumi-dotnet-9.0", about: "Pulumi CLI container for dotnet 9.0"},
     { name: "pulumi-go", about: "Pulumi CLI container for Go"},
     { name: "pulumi-nodejs", about: "Pulumi CLI container for NodeJS"},
     { name: "pulumi-nodejs-18", about: "Pulumi CLI container for NodeJS 18"},
