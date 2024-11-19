@@ -1,6 +1,9 @@
 name: pull-request
 on: pull_request
 
+permissions:
+  id-token: write # "write" means you can fetch OIDC tokens
+
 jobs:
 
   tests:
