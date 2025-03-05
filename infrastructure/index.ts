@@ -31,6 +31,21 @@ const contentBucket = new aws.s3.Bucket(
     },
     { protect: true });
 
+function generateTLSPolicyStatement(arn: string): aws.iam.PolicyStatement {
+    return {
+        Sid: "RequireTLS",
+        Effect: "Deny",
+        Principal: "*",
+        Action: "s3:*",
+        Resource: [arn, `${arn}/*`],
+        Condition: {
+            Bool: {
+                "aws:SecureTransport": "false",
+            },
+        },
+    };
+}
+
 // contentBucket needs to have the "public-read" ACL so its contents can be ready by CloudFront and
 // served. But we deny the s3:ListBucket permission to prevent unintended disclosure of the bucket's
 // contents. We also explicitly grant GetObject, in the event that the per-file ACL isn't set.
@@ -72,6 +87,7 @@ aws.getCallerIdentity().then((callerIdentity) => {
                     Action: ["s3:GetObject"],
                     Resource: [`${arn}/esc/releases/*`],
                 },
+                generateTLSPolicyStatement(arn),
             ],
         })),
     };
@@ -246,6 +262,16 @@ const logsBucketOwnershipControl = new aws.s3.BucketOwnershipControls(
     },
     { dependsOn: logsBucket },
     );
+
+const logsBucketPolicy = new aws.s3.BucketPolicy(`${fullDomain}-logs-policy`, {
+    bucket: logsBucket.bucket,
+    policy: logsBucket.arn.apply((arn: string) => JSON.stringify({
+        Version: "2012-10-17",
+        Statement: [
+            generateTLSPolicyStatement(arn),
+        ]
+    })),
+});
 
 // Add ACL for Data Account to access this bucket
 
