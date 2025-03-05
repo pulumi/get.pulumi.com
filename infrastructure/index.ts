@@ -31,13 +31,13 @@ const contentBucket = new aws.s3.Bucket(
     },
     { protect: true });
 
-function generateTLSPolicyStatement(arn: string): aws.iam.PolicyStatement {
+function generateTLSPolicyStatement(arn: pulumi.Input<string>): aws.iam.PolicyStatement {
     return {
         Sid: "RequireTLS",
         Effect: "Deny",
         Principal: "*",
         Action: "s3:*",
-        Resource: [arn, `${arn}/*`],
+        Resource: [arn, pulumi.interpolate`${arn}/*`],
         Condition: {
             Bool: {
                 "aws:SecureTransport": "false",
@@ -52,14 +52,14 @@ function generateTLSPolicyStatement(arn: string): aws.iam.PolicyStatement {
 aws.getCallerIdentity().then((callerIdentity) => {
     const denyListPolicyState: aws.s3.BucketPolicyArgs = {
         bucket: contentBucket.bucket,
-        policy: contentBucket.arn.apply((arn: string) => JSON.stringify({
+        policy: {
             Version: "2008-10-17",
             Statement: [
                 {
                     Effect: "Deny",
                     Principal: "*",
                     Action: "s3:ListBucket",
-                    Resource: arn,
+                    Resource: contentBucket.arn,
                     Condition: {
                         StringNotEquals: {
                             "aws:PrincipalAccount": callerIdentity.accountId,
@@ -71,25 +71,25 @@ aws.getCallerIdentity().then((callerIdentity) => {
                     Effect: "Allow",
                     Principal: "*",
                     Action: ["s3:GetObject"],
-                    Resource: [`${arn}/releases/plugins/*`],
+                    Resource: [pulumi.interpolate`${contentBucket.arn}/releases/plugins/*`],
                 },
                 {
                     Sid: "SDKPublicRead",
                     Effect: "Allow",
                     Principal: "*",
                     Action: ["s3:GetObject"],
-                    Resource: [`${arn}/releases/sdk/*`],
+                    Resource: [pulumi.interpolate`${contentBucket.arn}/releases/sdk/*`],
                 },
                 {
                     Sid: "ESCPublicRead",
                     Effect: "Allow",
                     Principal: "*",
                     Action: ["s3:GetObject"],
-                    Resource: [`${arn}/esc/releases/*`],
+                    Resource: [pulumi.interpolate`${contentBucket.arn}/esc/releases/*`],
                 },
-                generateTLSPolicyStatement(arn),
+                generateTLSPolicyStatement(contentBucket.arn),
             ],
-        })),
+        }
     };
 
     const denyListPolicy = new aws.s3.BucketPolicy("deny-list", denyListPolicyState);
@@ -263,21 +263,15 @@ const logsBucketOwnershipControl = new aws.s3.BucketOwnershipControls(
     { dependsOn: logsBucket },
     );
 
-const logsBucketPolicy = new aws.s3.BucketPolicy(`${fullDomain}-logs-policy`, {
-    bucket: logsBucket.bucket,
-    policy: logsBucket.arn.apply((arn: string) => JSON.stringify({
-        Version: "2012-10-17",
-        Statement: [
-            generateTLSPolicyStatement(arn),
-        ]
-    })),
-});
-
 // Add ACL for Data Account to access this bucket
 
 // Data AWS Account Canonical ID
 const airflowStackRef = new pulumi.StackReference(`pulumi/dwh-workflows-orchestrate-airflow/production`);
 const dataAccountCanonicalID = airflowStackRef.requireOutputValue("dataAccountCanonicalID");
+const airflowTasksRoleArn = airflowStackRef.getOutput('airflowTaskRoleArn');
+
+const dwhWorkflowRoleArn = cfg.get("dataWorkflowsBucketReaderRoleArn");
+
 
 // Constant Canonical ID for cloudfront, documented here:
 // https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/AccessLogs.html
@@ -340,6 +334,50 @@ const logsBucketACL = new aws.s3.BucketAclV2(
         dependsOn: logsBucketOwnershipControl,
     },
 );
+
+// Add bucket policies to allow DWH access on logs bucket
+// These roles only exist in prod
+function generateDwhAccessStatement(bucketArn: pulumi.Input<string>, roleArn?: pulumi.Input<string>): aws.iam.PolicyStatement[] {
+    if (!roleArn) {
+        return [];
+    }
+    return [
+        {
+            Effect: "Allow",
+            Principal: {
+                AWS: roleArn,
+            },
+            Action: [
+                "s3:GetObject",
+                "s3:GetObjectVersion",
+            ],
+            Resource: [ pulumi.interpolate`${bucketArn}/*` ],
+        },
+        {
+            Effect: "Allow",
+            Principal: {
+                AWS: roleArn
+            },
+            Action: [
+                "s3:ListBucket",
+                "s3:GetBucketLocation",
+            ],
+            Resource: [ bucketArn ],
+        }
+    ]
+}
+
+const logsBucketPolicy = new aws.s3.BucketPolicy(`${fullDomain}-logs-policy`, {
+    bucket: logsBucket.bucket,
+    policy: {
+        Version: "2012-10-17",
+        Statement: [
+            ...generateDwhAccessStatement(logsBucket.arn, dwhWorkflowRoleArn),
+            ...generateDwhAccessStatement(logsBucket.arn, airflowTasksRoleArn),
+            generateTLSPolicyStatement(logsBucket.arn),
+        ],
+    }
+});
 
 const buildDateHeaderName: string = "build-date";
 const buildDateHeaderValue: string = new Date().valueOf().toString();
