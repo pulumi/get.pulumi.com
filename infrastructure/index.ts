@@ -263,16 +263,6 @@ const logsBucketOwnershipControl = new aws.s3.BucketOwnershipControls(
     { dependsOn: logsBucket },
     );
 
-// Add ACL for Data Account to access this bucket
-
-// Data AWS Account Canonical ID
-const airflowStackRef = new pulumi.StackReference(`pulumi/dwh-workflows-orchestrate-airflow/production`);
-const dataAccountCanonicalID = airflowStackRef.requireOutputValue("dataAccountCanonicalID");
-const airflowTasksRoleArn = airflowStackRef.getOutput('airflowTaskRoleArn');
-
-const dwhWorkflowRoleArn = cfg.get("dataWorkflowsBucketReaderRoleArn");
-
-
 // Constant Canonical ID for cloudfront, documented here:
 // https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/AccessLogs.html
 const cloudFrontCanonicalID = "c4c1ede66af53448b93c283ce9448c4ba468c9432aa01d700d3878632f77d2d0";
@@ -310,20 +300,6 @@ const logsBucketACL = new aws.s3.BucketAclV2(
                     },
                     permission: "FULL_CONTROL",
                 },
-                {
-                    grantee: {
-                        type: "CanonicalUser",
-                        id: dataAccountCanonicalID,
-                    },
-                    permission: "READ",
-                },
-                {
-                    grantee: {
-                        type: "CanonicalUser",
-                        id: dataAccountCanonicalID,
-                    },
-                    permission: "READ_ACP",
-                },
             ],
             owner: {
                 id: productionCanonicalId,
@@ -335,45 +311,11 @@ const logsBucketACL = new aws.s3.BucketAclV2(
     },
 );
 
-// Add bucket policies to allow DWH access on logs bucket
-// These roles only exist in prod
-function generateDwhAccessStatement(bucketArn: pulumi.Input<string>, roleArn?: pulumi.Input<string>): aws.iam.PolicyStatement[] {
-    if (!roleArn) {
-        return [];
-    }
-    return [
-        {
-            Effect: "Allow",
-            Principal: {
-                AWS: roleArn,
-            },
-            Action: [
-                "s3:GetObject",
-                "s3:GetObjectVersion",
-            ],
-            Resource: [ pulumi.interpolate`${bucketArn}/*` ],
-        },
-        {
-            Effect: "Allow",
-            Principal: {
-                AWS: roleArn
-            },
-            Action: [
-                "s3:ListBucket",
-                "s3:GetBucketLocation",
-            ],
-            Resource: [ bucketArn ],
-        }
-    ]
-}
-
 const logsBucketPolicy = new aws.s3.BucketPolicy(`${fullDomain}-logs-policy`, {
     bucket: logsBucket.bucket,
     policy: {
         Version: "2012-10-17",
         Statement: [
-            ...generateDwhAccessStatement(logsBucket.arn, dwhWorkflowRoleArn),
-            ...generateDwhAccessStatement(logsBucket.arn, airflowTasksRoleArn),
             generateTLSPolicyStatement(logsBucket.arn),
         ],
     }

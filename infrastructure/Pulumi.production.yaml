@@ -2,4 +2,3 @@ config:
   aws:region: us-west-2
   get-pulumi-com:certificateArn: arn:aws:acm:us-east-1:058607598222:certificate/a3f72a2b-e715-4639-b126-1e4efc0b634b
   get-pulumi-com:domain: pulumi.com
-  get-pulumi-com:dataWorkflowsBucketReaderRoleArn: arn:aws:iam::777369438443:role/snowpipe-prodbuckets-to-snowflake-role
