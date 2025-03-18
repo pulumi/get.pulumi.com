@@ -1,0 +1,18 @@
+{
+	"name": "mirror-worker",
+	"version": "0.0.0",
+	"private": true,
+	"scripts": {
+		"deploy": "wrangler deploy src/index.ts",
+		"dev": "wrangler dev --remote",
+		"start": "wrangler dev",
+		"test": "vitest run"
+	},
+	"devDependencies": {
+		"@cloudflare/vitest-pool-workers": "^0.4.30",
+		"@cloudflare/workers-types": "^4.20240821.1",
+		"typescript": "^5.4.5",
+		"vitest": "1.5.0",
+		"wrangler": "^3.0.0"
+	}
+}
