@@ -28,7 +28,7 @@ const rolePolicy = new aws.iam.RolePolicyAttachment(`${name}-RolePolicyAttachmen
 });
 
 // Some resources _must_ be put in us-east-1, such as Lambda at Edge.
-const awsUsEast1 = new aws.Provider("us-east-1", { region: "us-east-1" });
+export const awsUsEast1 = new aws.Provider("us-east-1", { region: "us-east-1" });
 const lambda = new aws.lambda.CallbackFunction(`${name}-Function`, {
     publish: true,
     role,
