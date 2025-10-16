@@ -194,6 +194,7 @@ const repositoryNames: RepoInfo[] = [
     { name: "pulumi-python-3.11", about: "Pulumi CLI container for Python 3.11"},
     { name: "pulumi-python-3.12", about: "Pulumi CLI container for Python 3.12"},
     { name: "pulumi-python-3.13", about: "Pulumi CLI container for Python 3.13"},
+    { name: "pulumi-python-3.14", about: "Pulumi CLI container for Python 3.14"},
     { name: "pulumi-base", about: "Pulumi CLI container base"},
     { name: "pulumi-provider-build-environment"},
     { name: "pulumi-java", about: "Pulumi CLI container for Java"},
