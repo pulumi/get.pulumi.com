@@ -3,7 +3,7 @@ env:
   ESC_ACTION_OIDC_AUTH: true
   ESC_ACTION_OIDC_ORGANIZATION: pulumi
   ESC_ACTION_OIDC_REQUESTED_TOKEN_TYPE: urn:pulumi:token-type:access_token:organization
-  ESC_ACTION_ENVIRONMENT: imports/github-secrets
+  ESC_ACTION_ENVIRONMENT: github-secrets/pulumi-get.pulumi.com
   ESC_ACTION_EXPORT_ENVIRONMENT_VARIABLES: false
 name: Production
 on:
@@ -29,8 +29,8 @@ jobs:
     - name: Configure AWS credentials
       uses: aws-actions/configure-aws-credentials@v2
       with:
-        aws-access-key-id: ${{ secrets.CI_AWS_ACCESS_KEY_ID }}
-        aws-secret-access-key: ${{ secrets.CI_AWS_SECRET_ACCESS_KEY }}
+        aws-access-key-id: ${{ steps.esc-secrets.outputs.CI_AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ steps.esc-secrets.outputs.CI_AWS_SECRET_ACCESS_KEY }}
         aws-region: us-west-2
         role-to-assume: ${{ steps.esc-secrets.outputs.AWS_ROLE_TO_ASSUME_PRODUCTION }}
         role-external-id: "pulumi/get-pulumi-com/production"
