@@ -333,6 +333,17 @@ const cfViewerRequestFunction = new aws.cloudfront.Function(
         publish: true,
         code: `function handler(event){
 var request = event.request;
+var redirects = {
+    "/new/button.svg": "https://pulumi.com/images/deploy-with-pulumi/dark.svg",
+    "/new/button.png": "https://pulumi.com/images/deploy-with-pulumi/dark.png",
+};
+if (redirects[request.uri]) {
+    return {
+        statusCode: 301,
+        statusDescription: "Moved Permanently",
+        headers: { location: { value: redirects[request.uri] } },
+    };
+}
 request.headers[${JSON.stringify(buildDateHeaderName)}] = {
     value: ${JSON.stringify(buildDateHeaderValue)},
 };
@@ -457,18 +468,5 @@ for (let entry of fs.readdirSync(escRoot)) {
     }
 }
 
-// Upload all the files in ../dist/new. We use the mime library to determine the Content-Type header of each file.
-const distNewRoot = path.join(distRoot, "new");
-
-for (let entry of fs.readdirSync(distNewRoot)) {
-    const entryPath = path.join(distNewRoot, entry);
-    if (fs.statSync(entryPath).isFile()) {
-        // tslint:disable-next-line
-        new aws.s3.BucketObject("new/" + entry, {
-            bucket: contentBucket,
-            contentType: mime.getType(entryPath) || undefined,
-            source: new pulumi.asset.FileAsset(entryPath),
-            acl: "public-read",
-        });
-    }
-}
+// The files previously in ../dist/new (button.svg, button.png) are now hosted on
+// pulumi.com/images/deploy-with-pulumi/ and redirected via the CloudFront function above.
