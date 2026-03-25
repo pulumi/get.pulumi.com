@@ -28,7 +28,7 @@ jobs:
         role-session-name: get.pulumi.com-${{ github.run_id }}
     - run: yarn install
       working-directory: infrastructure
-    - uses: pulumi/actions@v4
+    - uses: pulumi/actions@a3f382e1242b69ab33854c253c3b580f1226348e # v4
       with:
         command: up
         stack-name: "pulumi/get-pulumi-com/production"

@@ -30,7 +30,7 @@ jobs:
     - run: yarn install
       working-directory: infrastructure
     - if: github.base_ref == 'production'
-      uses: pulumi/actions@v4
+      uses: pulumi/actions@a3f382e1242b69ab33854c253c3b580f1226348e # v4
       with:
         command: preview
         work-dir: infrastructure
@@ -38,7 +38,7 @@ jobs:
       env:
           PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
     - if: github.base_ref == 'master'
-      uses: pulumi/actions@v4
+      uses: pulumi/actions@a3f382e1242b69ab33854c253c3b580f1226348e # v4
       with:
         command: preview
         work-dir: infrastructure
