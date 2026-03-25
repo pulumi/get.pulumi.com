@@ -6,9 +6,9 @@
         "typescript": "^3.5.3"
     },
     "dependencies": {
-        "@pulumi/aws": "^5.0.0",
+        "@pulumi/aws": "^7.0.0",
         "@pulumi/pulumi": "^3.0.0",
-        "@pulumi/std": "^1.7.3",
+        "@pulumi/std": "^2.0.0",
         "mime": "^2.4.4"
     }
 }
