@@ -1,3 +1,10 @@
+permissions: write-all # Equivalent to default permissions plus id-token: write
+env:
+  ESC_ACTION_OIDC_AUTH: true
+  ESC_ACTION_OIDC_ORGANIZATION: pulumi
+  ESC_ACTION_OIDC_REQUESTED_TOKEN_TYPE: urn:pulumi:token-type:access_token:organization
+  ESC_ACTION_ENVIRONMENT: github-secrets/pulumi-get.pulumi.com
+  ESC_ACTION_EXPORT_ENVIRONMENT_VARIABLES: false
 name: pull-request
 on: pull_request
 
@@ -11,17 +18,20 @@ jobs:
     name: Preview
     runs-on: ubuntu-latest
     env:
-      AWS_ROLE_TO_ASSUME: ${{ secrets.AWS_ROLE_TO_ASSUME_STAGING }}
+      ESC_ACTION_EXPORT_ENVIRONMENT_VARIABLES: AWS_ROLE_TO_ASSUME=AWS_ROLE_TO_ASSUME_STAGING
     steps:
+    - name: Fetch secrets from ESC
+      id: esc-secrets
+      uses: pulumi/esc-action@v1
     - if: github.base_ref == 'production'
       run: |
-          echo "AWS_ROLE_TO_ASSUME=${{ secrets.AWS_ROLE_TO_ASSUME_PRODUCTION }}" >> $GITHUB_ENV
+          echo "AWS_ROLE_TO_ASSUME=${{ steps.esc-secrets.outputs.AWS_ROLE_TO_ASSUME_PRODUCTION }}" >> $GITHUB_ENV
     - uses: actions/checkout@v3
     - name: Configure AWS credentials
       uses: aws-actions/configure-aws-credentials@v2
       with:
-        aws-access-key-id: ${{ secrets.CI_AWS_ACCESS_KEY_ID }}
-        aws-secret-access-key: ${{ secrets.CI_AWS_SECRET_ACCESS_KEY }}
+        aws-access-key-id: ${{ steps.esc-secrets.outputs.CI_AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ steps.esc-secrets.outputs.CI_AWS_SECRET_ACCESS_KEY }}
         aws-region: us-west-2
         role-to-assume: ${{ env.AWS_ROLE_TO_ASSUME }}
         role-external-id: ${{ env.PULUMI_STACK_NAME }}
@@ -36,7 +46,7 @@ jobs:
         work-dir: infrastructure
         stack-name: "pulumi/get-pulumi-com/production"
       env:
-          PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
+          PULUMI_ACCESS_TOKEN: ${{ steps.esc-secrets.outputs.PULUMI_ACCESS_TOKEN }}
     - if: github.base_ref == 'master'
       uses: pulumi/actions@8582a9e8cc630786854029b4e09281acd6794b58 # v6
       with:
@@ -44,4 +54,4 @@ jobs:
         work-dir: infrastructure
         stack-name: "pulumi/get-pulumi-com/staging"
       env:
-        PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
+        PULUMI_ACCESS_TOKEN: ${{ steps.esc-secrets.outputs.PULUMI_ACCESS_TOKEN }}
