@@ -24,7 +24,7 @@ const role = new aws.iam.Role(`${name}-Role`, {
 
 const rolePolicy = new aws.iam.RolePolicyAttachment(`${name}-RolePolicyAttachment`, {
     role,
-    policyArn: aws.iam.ManagedPolicies.AWSLambdaBasicExecutionRole,
+    policyArn: aws.iam.ManagedPolicy.AWSLambdaBasicExecutionRole,
 });
 
 // Some resources _must_ be put in us-east-1, such as Lambda at Edge.
