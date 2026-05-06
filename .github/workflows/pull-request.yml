@@ -1,3 +1,10 @@
+permissions: write-all # Equivalent to default permissions plus id-token: write
+env:
+  ESC_ACTION_OIDC_AUTH: true
+  ESC_ACTION_OIDC_ORGANIZATION: pulumi
+  ESC_ACTION_OIDC_REQUESTED_TOKEN_TYPE: urn:pulumi:token-type:access_token:organization
+  ESC_ACTION_ENVIRONMENT: github-secrets/pulumi-get.pulumi.com
+  ESC_ACTION_EXPORT_ENVIRONMENT_VARIABLES: false
 name: pull-request
 on: pull_request
 
@@ -14,15 +21,20 @@ jobs:
       id-token: write
       contents: read
     env:
-      AWS_ROLE_TO_ASSUME: ${{ secrets.AWS_ROLE_TO_ASSUME_STAGING }}
+      ESC_ACTION_EXPORT_ENVIRONMENT_VARIABLES: AWS_ROLE_TO_ASSUME=AWS_ROLE_TO_ASSUME_STAGING
     steps:
+    - name: Fetch secrets from ESC
+      id: esc-secrets
+      uses: pulumi/esc-action@v1
     - if: github.base_ref == 'production'
       run: |
-          echo "AWS_ROLE_TO_ASSUME=${{ secrets.AWS_ROLE_TO_ASSUME_PRODUCTION }}" >> $GITHUB_ENV
+          echo "AWS_ROLE_TO_ASSUME=${{ steps.esc-secrets.outputs.AWS_ROLE_TO_ASSUME_PRODUCTION }}" >> $GITHUB_ENV
     - uses: actions/checkout@v4
     - name: Configure AWS credentials
       uses: aws-actions/configure-aws-credentials@v4
       with:
+        aws-access-key-id: ${{ steps.esc-secrets.outputs.CI_AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ steps.esc-secrets.outputs.CI_AWS_SECRET_ACCESS_KEY }}
         aws-region: us-west-2
         role-to-assume: ${{ env.AWS_ROLE_TO_ASSUME }}
         role-duration-seconds: 3600
@@ -36,7 +48,7 @@ jobs:
         work-dir: infrastructure
         stack-name: "pulumi/get-pulumi-com/production"
       env:
-          PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
+          PULUMI_ACCESS_TOKEN: ${{ steps.esc-secrets.outputs.PULUMI_ACCESS_TOKEN }}
     - if: github.base_ref == 'master'
       uses: pulumi/actions@8e5e406f4007fca908480587cb9893c07090f58d # v7
       with:
@@ -44,4 +56,4 @@ jobs:
         work-dir: infrastructure
         stack-name: "pulumi/get-pulumi-com/staging"
       env:
-        PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
+        PULUMI_ACCESS_TOKEN: ${{ steps.esc-secrets.outputs.PULUMI_ACCESS_TOKEN }}
