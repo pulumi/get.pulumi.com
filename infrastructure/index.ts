@@ -269,7 +269,7 @@ const logsBucketOwnershipControl = new aws.s3.BucketOwnershipControls(
 // Constant Canonical ID for cloudfront, documented here:
 // https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/AccessLogs.html
 const cloudFrontCanonicalID = "c4c1ede66af53448b93c283ce9448c4ba468c9432aa01d700d3878632f77d2d0";
-const logsBucketACL = new aws.s3.BucketAclV2(
+const logsBucketACL = new aws.s3.BucketAcl(
     `${fullDomain}-logs-acl`,
     {
         bucket: logsBucket.id,
@@ -311,6 +311,8 @@ const logsBucketACL = new aws.s3.BucketAclV2(
     },
     {
         dependsOn: logsBucketOwnershipControl,
+        // BucketAclV2 was deprecated in favor of BucketAcl in aws@7. Alias keeps the existing state row.
+        aliases: [{ type: "aws:s3/bucketAclV2:BucketAclV2" }],
     },
 );
 
