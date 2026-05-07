@@ -188,6 +188,7 @@ const repositoryNames: RepoInfo[] = [
     { name: "pulumi-nodejs-22", about: "Pulumi CLI container for NodeJS 22"},
     { name: "pulumi-nodejs-23", about: "Pulumi CLI container for NodeJS 23"},
     { name: "pulumi-nodejs-24", about: "Pulumi CLI container for NodeJS 24"},
+    { name: "pulumi-nodejs-26", about: "Pulumi CLI container for NodeJS 26"},
     { name: "pulumi-python", about: "Pulumi CLI container for Python"},
     { name: "pulumi-python-3.9", about: "Pulumi CLI container for Python 3.9"},
     { name: "pulumi-python-3.10", about: "Pulumi CLI container for Python 3.10"},
