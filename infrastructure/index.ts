@@ -16,6 +16,9 @@ const subDomain = "get";
 const domain = cfg.require("domain");
 const fullDomain = `${subDomain}.${domain}`;
 const certificateArn = cfg.require("certificateArn");
+// Defaults to true. Production sets this to false because the get.pulumi.com
+// record lives behind Cloudflare and is managed out-of-band.
+const manageRoute53Record = cfg.getBoolean("manageRoute53Record") ?? true;
 const canonicalUserId = aws.s3.getCanonicalUserId({});
 const productionCanonicalId = canonicalUserId.then(user => user.id);
 const repoDefaultDescription = "Pulumi’s modern infrastructure as code platform empowers cloud engineering teams to work better together to ship faster using the world’s most popular programming languages. Pulumi works with AWS, Kubernetes, and over 50 cloud infrastructure providers."
@@ -413,18 +416,20 @@ const distributionArgs: aws.cloudfront.DistributionArgs = {
 
 const cloudfront = new aws.cloudfront.Distribution(`${fullDomain}-cf`, distributionArgs);
 
-const record = new aws.route53.Record(`${fullDomain}-record`, {
-    name: subDomain,
-    type: "A",
-    zoneId: aws.route53.getZone({ name: domain }).then(x => x.zoneId),
-    aliases: [
-        {
-            name: cloudfront.domainName,
-            zoneId: cloudfront.hostedZoneId,
-            evaluateTargetHealth: false,
-        },
-    ],
-});
+if (manageRoute53Record) {
+    new aws.route53.Record(`${fullDomain}-record`, {
+        name: subDomain,
+        type: "A",
+        zoneId: aws.route53.getZone({ name: domain }).then(x => x.zoneId),
+        aliases: [
+            {
+                name: cloudfront.domainName,
+                zoneId: cloudfront.hostedZoneId,
+                evaluateTargetHealth: false,
+            },
+        ],
+    });
+}
 
 // Upload all the files in ../dist. We force the Content-Type header to text/plain, so it renders nicely in a web
 // browser when you view the page directly (for example, to inspect the script).
