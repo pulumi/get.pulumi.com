@@ -32,11 +32,8 @@ jobs:
     - name: Configure AWS credentials
       uses: aws-actions/configure-aws-credentials@v4
       with:
-        aws-access-key-id: ${{ steps.esc-secrets.outputs.CI_AWS_ACCESS_KEY_ID }}
-        aws-secret-access-key: ${{ steps.esc-secrets.outputs.CI_AWS_SECRET_ACCESS_KEY }}
         aws-region: us-west-2
         role-to-assume: ${{ steps.esc-secrets.outputs.AWS_ROLE_TO_ASSUME_PRODUCTION }}
-        role-external-id: "pulumi/get-pulumi-com/production"
         role-duration-seconds: 3600
         role-session-name: get.pulumi.com-${{ github.run_id }}
     - run: yarn install
