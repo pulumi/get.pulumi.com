@@ -70,15 +70,22 @@ while [ $# -gt 0 ]; do
             if [ "$2" != "latest" ]; then
                 VERSION=$2
             fi
+            shift
             ;;
         --silent)
             SILENT="--silent"
             ;;
         --install-root)
             INSTALL_ROOT=$2
+            shift
             ;;
         --no-edit-path)
             NO_EDIT_PATH="true"
+            ;;
+        *)
+            >&2 say_red "error: unknown option '$1'"
+            >&2 say_red "usage: install.sh [--version <version>] [--install-root <path>] [--no-edit-path] [--silent]"
+            exit 1
             ;;
      esac
      shift

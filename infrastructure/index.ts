@@ -16,6 +16,9 @@ const subDomain = "get";
 const domain = cfg.require("domain");
 const fullDomain = `${subDomain}.${domain}`;
 const certificateArn = cfg.require("certificateArn");
+// Defaults to true. Production sets this to false because the get.pulumi.com
+// record lives behind Cloudflare and is managed out-of-band.
+const manageRoute53Record = cfg.getBoolean("manageRoute53Record") ?? true;
 const canonicalUserId = aws.s3.getCanonicalUserId({});
 const productionCanonicalId = canonicalUserId.then(user => user.id);
 const repoDefaultDescription = "Pulumi’s modern infrastructure as code platform empowers cloud engineering teams to work better together to ship faster using the world’s most popular programming languages. Pulumi works with AWS, Kubernetes, and over 50 cloud infrastructure providers."
@@ -188,6 +191,7 @@ const repositoryNames: RepoInfo[] = [
     { name: "pulumi-nodejs-22", about: "Pulumi CLI container for NodeJS 22"},
     { name: "pulumi-nodejs-23", about: "Pulumi CLI container for NodeJS 23"},
     { name: "pulumi-nodejs-24", about: "Pulumi CLI container for NodeJS 24"},
+    { name: "pulumi-nodejs-26", about: "Pulumi CLI container for NodeJS 26"},
     { name: "pulumi-python", about: "Pulumi CLI container for Python"},
     { name: "pulumi-python-3.9", about: "Pulumi CLI container for Python 3.9"},
     { name: "pulumi-python-3.10", about: "Pulumi CLI container for Python 3.10"},
@@ -268,7 +272,7 @@ const logsBucketOwnershipControl = new aws.s3.BucketOwnershipControls(
 // Constant Canonical ID for cloudfront, documented here:
 // https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/AccessLogs.html
 const cloudFrontCanonicalID = "c4c1ede66af53448b93c283ce9448c4ba468c9432aa01d700d3878632f77d2d0";
-const logsBucketACL = new aws.s3.BucketAclV2(
+const logsBucketACL = new aws.s3.BucketAcl(
     `${fullDomain}-logs-acl`,
     {
         bucket: logsBucket.id,
@@ -310,6 +314,8 @@ const logsBucketACL = new aws.s3.BucketAclV2(
     },
     {
         dependsOn: logsBucketOwnershipControl,
+        // BucketAclV2 was deprecated in favor of BucketAcl in aws@7. Alias keeps the existing state row.
+        aliases: [{ type: "aws:s3/bucketAclV2:BucketAclV2" }],
     },
 );
 
@@ -410,18 +416,20 @@ const distributionArgs: aws.cloudfront.DistributionArgs = {
 
 const cloudfront = new aws.cloudfront.Distribution(`${fullDomain}-cf`, distributionArgs);
 
-const record = new aws.route53.Record(`${fullDomain}-record`, {
-    name: subDomain,
-    type: "A",
-    zoneId: aws.route53.getZone({ name: domain }).then(x => x.zoneId),
-    aliases: [
-        {
-            name: cloudfront.domainName,
-            zoneId: cloudfront.hostedZoneId,
-            evaluateTargetHealth: false,
-        },
-    ],
-});
+if (manageRoute53Record) {
+    new aws.route53.Record(`${fullDomain}-record`, {
+        name: subDomain,
+        type: "A",
+        zoneId: aws.route53.getZone({ name: domain }).then(x => x.zoneId),
+        aliases: [
+            {
+                name: cloudfront.domainName,
+                zoneId: cloudfront.hostedZoneId,
+                evaluateTargetHealth: false,
+            },
+        ],
+    });
+}
 
 // Upload all the files in ../dist. We force the Content-Type header to text/plain, so it renders nicely in a web
 // browser when you view the page directly (for example, to inspect the script).
