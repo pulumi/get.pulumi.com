@@ -377,11 +377,18 @@ if [ "${NO_EDIT_PATH}" != "true" ] && ! command -v pulumi >/dev/null; then
 fi
 
 # Warn if the pulumi command is available, but it is in a different location from the current install root.
-if [ "$(command -v pulumi)" != "" ] && [ "$(command -v pulumi)" != "${PULUMI_INSTALL_ROOT}/bin/pulumi" ]; then
-    say_yellow
-    say_yellow "warning: Pulumi has been installed to ${PULUMI_INSTALL_ROOT}/bin, but it looks like there's a different copy"
-    say_yellow "         on your \$PATH at $(dirname "$(command -v pulumi)"). You'll need to explicitly invoke the"
-    say_yellow "         version you just installed or modify your \$PATH to prefer this location."
+# Skip the warning when the existing pulumi on $PATH is an npm/npx-managed shim (lives under node_modules/.bin).
+PULUMI_ON_PATH="$(command -v pulumi || true)"
+if [ -n "${PULUMI_ON_PATH}" ] && [ "${PULUMI_ON_PATH}" != "${PULUMI_INSTALL_ROOT}/bin/pulumi" ]; then
+    case "${PULUMI_ON_PATH}" in
+        */node_modules/.bin/*) ;;
+        *)
+            say_yellow
+            say_yellow "warning: Pulumi has been installed to ${PULUMI_INSTALL_ROOT}/bin, but it looks like there's a different copy"
+            say_yellow "         on your \$PATH at $(dirname "${PULUMI_ON_PATH}"). You'll need to explicitly invoke the"
+            say_yellow "         version you just installed or modify your \$PATH to prefer this location."
+            ;;
+    esac
 fi
 
 say_blue
