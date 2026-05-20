@@ -1,6 +1,6 @@
 # Releasing
 
-Code merged to `master` is deployed to staging on `https://get.pulumi-staging.io`. To release changes to to production, merge the `master` branch into `production`. This will trigger a deployment to `https://get.pulumi.io`.
+Code merged to `master` is deployed to staging on `https://get.pulumi-staging.io`. To release changes to to production, merge the `master` branch into `production`. This will trigger a deployment to `https://get.pulumi.com`.
 
 Additionally, in production there is a Cloudflare cache in front of the site. The cache is stored in the [R2 bucket](https://dash.cloudflare.com/f307706bb81876204172c18d81cb3ffd/r2/default/buckets/get-pulumi-com-mirror) and files need to be manually deleted.
 
