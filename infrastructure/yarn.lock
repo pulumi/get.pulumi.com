@@ -438,17 +438,17 @@
   integrity sha512-b1UQwcEZ4yCnMCD8DAL1VlbvBJE9/IX4FTIp7BG1xYpf29SLazLSrqUkj4w7Y5y7cCVP6E5tcqqcI0xemPkHug==
 
 "@pulumi/aws@^7.0.0":
-  version "7.41.0"
-  resolved "https://registry.yarnpkg.com/@pulumi/aws/-/aws-7.41.0.tgz#dc473755544b302b747542940eb3d993a82ef624"
-  integrity sha512-FkmcmI2TZUh+tdMwofyJZ52gNP9hAe6xcbs+tP9ZC+C3/HxrsD6HKmT8WbYigowFp9ZXRJSOsF7YkBrtgjP7Fw==
+  version "7.42.0"
+  resolved "https://registry.yarnpkg.com/@pulumi/aws/-/aws-7.42.0.tgz#c7963e1de8e55abe454f05ae5bcd9c0ebd837e56"
+  integrity sha512-luw7sk0efaD0WeayAm2Hx9uJmcUzc/0fwkrd2J1GJ7FFPWf1AwacmcUayPEbhwVp+L/vFXP7h2Z3A85AVoaCow==
   dependencies:
     "@pulumi/pulumi" "^3.142.0"
     mime "^2.0.0"
 
 "@pulumi/pulumi@^3.0.0", "@pulumi/pulumi@^3.142.0":
-  version "3.256.0"
-  resolved "https://registry.yarnpkg.com/@pulumi/pulumi/-/pulumi-3.256.0.tgz#1189c04cd235778a60cd7395fd43be2ef82dc99d"
-  integrity sha512-EK1TQieOmxTxbIpX5EKTPpC1WYappH3ASEZzN6Q9gs7rZjuZCATXI9Am8nszmlRdtPlAiVSW8NfQNKCnaNk34A==
+  version "3.257.0"
+  resolved "https://registry.yarnpkg.com/@pulumi/pulumi/-/pulumi-3.257.0.tgz#69e3f3005186edbaa335a51c78f46ab69bdf59f2"
+  integrity sha512-YjI+4ClA3AwGoMR1J58GZpt81P0vTJQHi22l4JGSl8YAnPjuJPcvpuOFt8BJrY659bznBUnIS/fDTiCHcEWxCA==
   dependencies:
     "@grpc/grpc-js" "^1.10.1"
     "@logdna/tail-file" "^2.0.6"
@@ -670,9 +670,9 @@ chownr@^3.0.0:
   integrity sha512-+IxzY9BZOQd/XuYPRmrvEVjF/nqj5kgT4kEq7VofrDoM1MxoRjEWkrCC3EtLi59TVawxTAn+orJwFQcrqEN1+g==
 
 cjs-module-lexer@^2.2.0:
-  version "2.2.0"
-  resolved "https://registry.yarnpkg.com/cjs-module-lexer/-/cjs-module-lexer-2.2.0.tgz#b3ca5101843389259ade7d88c77bd06ce55849ca"
-  integrity sha512-4bHTS2YuzUvtoLjdy+98ykbNB5jS0+07EvFNXerqZQJ89F7DI6ET7OQo/HJuW6K0aVsKA9hj9/RVb2kQVOrPDQ==
+  version "2.2.1"
+  resolved "https://registry.yarnpkg.com/cjs-module-lexer/-/cjs-module-lexer-2.2.1.tgz#ab35b03c56ade05fe170c70e67ae89f60666847c"
+  integrity sha512-Ca8swihM+/4yKecYHY52kgJd300hi2lADU/a1RxNTRe+RJ9jvqQlESpbz9DnG9mowez8qwXHB8qYdIUw9e+F5Q==
 
 cliui@^8.0.1:
   version "8.0.1"
@@ -970,9 +970,9 @@ ini@^6.0.0:
   integrity sha512-IBTdIkzZNOpqm7q3dRqJvMaldXjDHWkEDfrwGEQTs5eaQMWV+djAhR+wahyNNMAa+qpbDUhBMVt4ZKNwpPm7xQ==
 
 ip-address@^10.1.1:
-  version "10.4.0"
-  resolved "https://registry.yarnpkg.com/ip-address/-/ip-address-10.4.0.tgz#c5910bc541b6eae287765d1e4846be0308a05d93"
-  integrity sha512-oSK96Grm3aP6OrS263xVxbNDGVL7rzBtYdpGqlDG8iQdoenDoTs/nkki+DflYbAEE8Xl6o5YxhxlrKvI3nqKXQ==
+  version "10.5.0"
+  resolved "https://registry.yarnpkg.com/ip-address/-/ip-address-10.5.0.tgz#fcd6d7dfe9e68416b7cb71afe9bc960b3e38c13b"
+  integrity sha512-R5SnVLJmgYYvf2F2ZgwSBnelz5G4q5AxIC277GDfUaNbrZKNANcBC7RHqYYePlszf4kBolVkJauG0ZjHHFh55g==
 
 is-core-module@^2.16.1:
   version "2.16.2"
