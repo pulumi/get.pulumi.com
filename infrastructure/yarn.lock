@@ -446,9 +446,9 @@
     mime "^2.0.0"
 
 "@pulumi/pulumi@^3.0.0", "@pulumi/pulumi@^3.142.0":
-  version "3.264.0"
-  resolved "https://registry.yarnpkg.com/@pulumi/pulumi/-/pulumi-3.264.0.tgz#4cc1b902377389aefcd0cc2298fa0eabc11bfc4a"
-  integrity sha512-XU9xl05RwO8J7UobJXKxGcmE063GNescXjKrQnUSdvAgbKXxdnSVqcglUPwyDyRFRlGdJ6HkuN26gdR9cEzfTA==
+  version "3.265.0"
+  resolved "https://registry.yarnpkg.com/@pulumi/pulumi/-/pulumi-3.265.0.tgz#1d24026d4ddf2d2c8001c5e3625be5c416be5f61"
+  integrity sha512-rg/aFiQ1DIWcqQOQLuzg/9vIC5J4L6eLLkT54FPlIf0yhYTvEnREF7uip+WLSdHhHTi81PzeU0MPYRtiPTJ+IQ==
   dependencies:
     "@grpc/grpc-js" "^1.10.1"
     "@logdna/tail-file" "^2.0.6"
@@ -553,9 +553,9 @@
   integrity sha512-Jus9s4CDbqwocc5pOAnh8ShfrnMcPHuJYzVcSUU7lrh8Ni5HuIqX3oilL86p3dlTrk0LzHRCgA/GQ7uNCw6l2Q==
 
 "@types/node@>=13.7.0":
-  version "26.6.2"
-  resolved "https://registry.yarnpkg.com/@types/node/-/node-26.6.2.tgz#11bfb8e00bafe728d2113e474a7637becc9ab279"
-  integrity sha512-X1P21scMv4zGKLYqjdGjaKa7COa0RKVYYZZN/NfvLQ1JegxFhdhpZG/Lyn8AXx6CDUavKAd11v6BvfpkDByK8g==
+  version "26.6.3"
+  resolved "https://registry.yarnpkg.com/@types/node/-/node-26.6.3.tgz#411dccb5fc25687c958fe35b6ca3741d48a8d13c"
+  integrity sha512-dsqMQQoeTLqu9wynDD00q573mNzso3IdQOAfHRJqLCcmCFPoGo9A1bDpUcv/9tnKpErQWv9uKeGfl37EIS02Yg==
   dependencies:
     undici-types "~8.9.0"
 
@@ -1698,9 +1698,9 @@ undici-types@~8.9.0:
   integrity sha512-KTDyRTYX8sWmKXAikPHHSyc63CRPETMctyjKFupcC6OBLXT3xsN0e9aF7m+mIXutFWpUXuedtowG7iLOzp0kQg==
 
 undici@^6.25.0:
-  version "6.28.1"
-  resolved "https://registry.yarnpkg.com/undici/-/undici-6.28.1.tgz#aa9d2c44aef3840bef80216f2a50f337543a3fbd"
-  integrity sha512-zWpdTVD54H48CIybL0rWQ3ukpb9d23wM7eH5RtfdmeP70cWHNjtfo7P4vZX+5CoDcO53J4Pu5uXp7lNfjc6DRA==
+  version "6.29.0"
+  resolved "https://registry.yarnpkg.com/undici/-/undici-6.29.0.tgz#140fa16e337ac706d6ff12f03fbe5c4357e5f9a3"
+  integrity sha512-R+RODBqp6i2pPflGdq+xIOUkl+RNfGgHwoinecKu/JCuf2uO06cOKoDbI2P7Dn6KcswdKwrczbU6IYJ6K8X+wg==
 
 upath@^1.1.0:
   version "1.2.0"
