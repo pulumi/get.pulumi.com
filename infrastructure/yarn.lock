@@ -446,9 +446,9 @@
     mime "^2.0.0"
 
 "@pulumi/pulumi@^3.0.0", "@pulumi/pulumi@^3.142.0":
-  version "3.265.0"
-  resolved "https://registry.yarnpkg.com/@pulumi/pulumi/-/pulumi-3.265.0.tgz#1d24026d4ddf2d2c8001c5e3625be5c416be5f61"
-  integrity sha512-rg/aFiQ1DIWcqQOQLuzg/9vIC5J4L6eLLkT54FPlIf0yhYTvEnREF7uip+WLSdHhHTi81PzeU0MPYRtiPTJ+IQ==
+  version "3.266.0"
+  resolved "https://registry.yarnpkg.com/@pulumi/pulumi/-/pulumi-3.266.0.tgz#690d75e0906c7a11aea21c5e168a1fea22063062"
+  integrity sha512-aM1TzVKR0XkqcvEVT4ewZY6m6c/UHyj0JLy9OuTLzGjLl+OBzrFfS0XM3kEW1RGDG9aEboyTyVrk8Tzs4OLmPA==
   dependencies:
     "@grpc/grpc-js" "^1.10.1"
     "@logdna/tail-file" "^2.0.6"
