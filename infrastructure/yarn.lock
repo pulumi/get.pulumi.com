@@ -223,9 +223,9 @@
     "@opentelemetry/api" "^1.3.0"
 
 "@opentelemetry/api@^1.3.0", "@opentelemetry/api@^1.9":
-  version "1.9.1"
-  resolved "https://registry.yarnpkg.com/@opentelemetry/api/-/api-1.9.1.tgz#c1b0346de336ba55af2d5a7970882037baedec05"
-  integrity sha512-gLyJlPHPZYdAk1JENA9LeHejZe1Ti77/pTeFm/nMXmQH/HFZlcS/O2XJB+L8fkbrNSqhdtlvjBVjxwUYanNH5Q==
+  version "1.10.0"
+  resolved "https://registry.yarnpkg.com/@opentelemetry/api/-/api-1.10.0.tgz#31d2e3d36ffc6cdd5ce165251e7fa13bbad0fd8a"
+  integrity sha512-lMkyes8iHrG+mk6WH7X70MdCLI2RS0FwNBY1PyQ8UemaijE2m5mv5A0Niy3HtbYTFrgkUEQjFMXmSAk2hQDuPQ==
 
 "@opentelemetry/context-async-hooks@2.12.0":
   version "2.12.0"
@@ -446,9 +446,9 @@
     mime "^2.0.0"
 
 "@pulumi/pulumi@^3.0.0", "@pulumi/pulumi@^3.142.0":
-  version "3.270.0"
-  resolved "https://registry.yarnpkg.com/@pulumi/pulumi/-/pulumi-3.270.0.tgz#5a66fd22ebc38797afd2abad21e6e98efaf9ef37"
-  integrity sha512-k2GSGtoP2yrkIe4r+1YvyKL6k7mM6SYnySv6tSzGrv/oTY7WemEmvNEvn7Qd/JbkCMmYeBhWULDS5qB9qpvgkg==
+  version "3.271.0"
+  resolved "https://registry.yarnpkg.com/@pulumi/pulumi/-/pulumi-3.271.0.tgz#7c0a453244ecd3b963d25e0158b724c73f482116"
+  integrity sha512-5Ol0JIf0vCbiFj1j3r0hvdaCSCbCURhfOxpNvTsE1qhjJS3m665UG1qO3HKrB6T9mD7OzgcD1y4PbL6EGl0gjg==
   dependencies:
     "@grpc/grpc-js" "^1.10.1"
     "@logdna/tail-file" "^2.0.6"
@@ -1383,9 +1383,9 @@ picomatch@^4.0.4:
   integrity sha512-qcJu88Q2IWqJsDD529JKMdwGm/dvInW4HvQnRwiH9JtihJvzGOscDtHE3x1pBKeUOTysQ8kVmLnJ2kJu7yhcGA==
 
 postcss-selector-parser@^7.0.0:
-  version "7.1.6"
-  resolved "https://registry.yarnpkg.com/postcss-selector-parser/-/postcss-selector-parser-7.1.6.tgz#45e970f2d93d4547d6754167ed1132f43012c4bf"
-  integrity sha512-7qASPzhKF2l2KLboRZux8CCTRMdGiV08vWmyKzPz22qZ7ZjQBOeY7rNzNoCLSUiftJ7HUq0GERHmxw/t0dCdMw==
+  version "7.1.7"
+  resolved "https://registry.yarnpkg.com/postcss-selector-parser/-/postcss-selector-parser-7.1.7.tgz#70e353032ced41529d70b7662227a74eb001d31b"
+  integrity sha512-wWBro/7hJ40ye6TPiXkUQoXKCw23xSsjriUvqd7Uls9Sso3oLiON1flc18cCdnjgCRXw4fBVqUJJeOdDTh3P3g==
   dependencies:
     cssesc "^3.0.0"
     util-deprecate "^1.0.2"
