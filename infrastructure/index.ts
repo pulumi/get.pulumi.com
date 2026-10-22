@@ -90,6 +90,13 @@ aws.getCallerIdentity().then((callerIdentity) => {
                     Action: ["s3:GetObject"],
                     Resource: [pulumi.interpolate`${contentBucket.arn}/esc/releases/*`],
                 },
+                {
+                    Sid: "CustomerManagedWorkflowAgentPublicRead",
+                    Effect: "Allow",
+                    Principal: "*",
+                    Action: ["s3:GetObject"],
+                    Resource: [pulumi.interpolate`${contentBucket.arn}/releases/customer-managed-workflow-agent/*`],
+                },
                 generateTLSPolicyStatement(contentBucket.arn),
             ],
         }
